@@ -1,0 +1,2100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="AfsalOS - Mohammed Afsal's interactive portfolio. Builder, AI enthusiast, and music creator. Explore my projects, listen to my music, and get in touch!">
+<meta name="author" content="Mohammed Afsal">
+<title>AfsalOS</title>
+<!-- External Libraries via CDN for beauty and functionality -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+
+<style>
+    :root {
+        --bg-color: #f3f3f3;
+        --taskbar-bg: rgba(243, 243, 243, 0.85);
+        --window-bg: rgba(255, 255, 255, 0.9);
+        --acrylic-blur: blur(20px) saturate(125%);
+        --accent-color: #0078d4;
+        --text-color: #222;
+        --border-color: rgba(0, 0, 0, 0.1);
+        --border-radius: 8px;
+        --shadow: 0 10px 30px rgba(0,0,0,0.15);
+        --Wallpaper: url('public/wallpaper.jpg');
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --bg-color: #202020;
+            --taskbar-bg: rgba(32, 32, 32, 0.85);
+            --window-bg: rgba(40, 40, 40, 0.85);
+            --text-color: #eee;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+    }
+
+    * { box-sizing: border-box; user-select: none; }
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: var(--text-color); }
+
+    /* --- Boot Screen --- */
+    #boot-screen {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: #000; z-index: 99999; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; color: white; transition: opacity 1s;
+    }
+    .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.1); width: 50px; height: 50px;
+        border-radius: 50%; border-left-color: var(--accent-color);
+        animation: spin 1s linear infinite; margin-bottom: 20px;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* --- Desktop --- */
+    #desktop {
+        background-image: var(--Wallpaper);
+        background-size: cover; background-position: center;
+        width: 100%; height: 100%; position: relative; overflow: hidden;
+        transition: transform 0.1s ease-out;
+    }
+
+    #desktop-icons {
+        padding: 10px; display: flex; flex-direction: column; gap: 10px; flex-wrap: wrap; height: 90%; width: fit-content;
+    }
+
+    .d-icon {
+        width: 80px; text-align: center; padding: 10px 5px; border-radius: 4px;
+        cursor: pointer; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+        transition: background 0.2s; display: flex; flex-direction: column; align-items: center;
+        touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        user-select: none; -webkit-user-select: none;
+    }
+    .d-icon:hover { background: rgba(255,255,255,0.1); }
+    .d-icon:active { background: rgba(255,255,255,0.2); transform: scale(0.95); }
+    .d-icon.selected { background: rgba(255,255,255,0.2); border: 1px dotted rgba(255,255,255,0.5); }
+    .d-icon i { font-size: 32px; margin-bottom: 5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); pointer-events: none; }
+    .d-icon[data-app="file-explorer"] i { color: #ffd66b; }
+    .d-icon[data-app="edge"] i { color: #00ca7d; }
+    .d-icon span { font-size: 12px; word-break: break-word; pointer-events: none; }
+
+    /* --- Taskbar --- */
+    #taskbar {
+        position: absolute; bottom: 0; left: 0; width: 100%; height: 48px;
+        background: var(--taskbar-bg); backdrop-filter: var(--acrylic-blur);
+        border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;
+        padding: 0 15px; z-index: 10000;
+    }
+
+    .taskbar-center { display: flex; gap: 8px; height: 100%; align-items: center; position:absolute; left: 50%; transform: translateX(-50%); }
+    .tb-icon {
+        width: 40px; height: 40px; border-radius: 4px; display: flex; justify-content: center; align-items: center;
+        font-size: 22px; cursor: pointer; transition: all 0.2s; color: var(--text-color); position: relative;
+    }
+    .tb-icon:hover { background: rgba(255,255,255,0.1); }
+    .tb-icon:active { transform: scale(0.9); }
+    .tb-icon.active::after {
+        content: ''; position: absolute; bottom: 2px; width: 16px; height: 3px;
+        background: var(--accent-color); border-radius: 2px;
+    }
+    #start-btn i { color: #00a2ed; }
+
+    .taskbar-right { display: flex; align-items: center; gap: 15px; font-size: 12px; }
+    #clock { text-align: center; cursor: default; }
+
+    /* --- Start Menu --- */
+    #start-menu {
+        position: absolute; bottom: 55px; left: 50%; transform: translateX(-50%) translateY(20px);
+        width: 600px; height: 600px; background: var(--window-bg);
+        backdrop-filter: var(--acrylic-blur); border: 1px solid var(--border-color);
+        border-radius: var(--border-radius); box-shadow: var(--shadow);
+        padding: 20px; display: none; flex-direction: column; opacity: 0; transition: all 0.2s ease-out; z-index: 10001;
+    }
+    #start-menu.open { display: flex; opacity: 1; transform: translateX(-50%) translateY(0); }
+    
+    .search-bar {
+        background: rgba(128,128,128,0.1); border: 1px solid var(--border-color); border-radius: 4px;
+        padding: 8px 12px; display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+    }
+    .search-bar input { border: none; background: transparent; outline: none; width: 100%; color: var(--text-color); }
+    
+    .pinned-apps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; padding: 10px; overflow-y: auto; }
+    .app-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; padding: 10px; border-radius: 4px; }
+    .app-item:hover { background: rgba(255,255,255,0.1); }
+    .app-item i { font-size: 28px; }
+    .app-item span { font-size: 11px; text-align: center; }
+
+    /* --- Windows --- */
+    .window {
+        position: absolute; background: var(--window-bg); backdrop-filter: blur(40px);
+        border: 1px solid var(--border-color); border-radius: var(--border-radius);
+        box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden;
+        min-width: 300px; min-height: 200px; resize: both;
+        animation: openWindow 0.2s ease-out;
+    }
+    @keyframes openWindow { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .window.minimized { display: none; }
+    .window.maximized { top: 0 !important; left: 0 !important; width: 100% !important; height: calc(100% - 48px) !important; border-radius: 0; resize: none; }
+
+    .title-bar {
+        height: 32px; display: flex; justify-content: space-between; align-items: center; padding: 0 10px;
+        border-bottom: 1px solid var(--border-color); cursor: grab; background: rgba(255,255,255,0.05);
+    }
+    .title-bar-text { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600;}
+    .window-controls { display: flex; height: 100%; }
+    .win-btn { width: 40px; height: 100%; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s;}
+    .win-btn:hover { background: rgba(128,128,128,0.1); }
+    .win-btn.close:hover { background: #e81123; color: white; }
+
+    .window-content { flex: 1; overflow: auto; position: relative; user-select: text; }
+
+    /* --- APP STYLES --- */
+    
+    /* Notepad */
+    textarea.notepad-area { width: 100%; height: 100%; border: none; padding: 10px; resize: none; outline: none; background: transparent; color: var(--text-color); font-family: monospace; }
+    .app-menu { padding: 5px; border-bottom: 1px solid var(--border-color); font-size: 12px; display: flex; gap: 10px; }
+    .menu-item { padding: 2px 8px; cursor: pointer; } .menu-item:hover { background: rgba(128,128,128,0.1); border-radius: 4px;}
+
+    /* Terminal */
+    .terminal { background: #1e1e1e; color: #ccc; font-family: 'Consolas', monospace; padding: 10px; height: 100%; overflow-y: auto; font-size: 14px; }
+    .term-output { white-space: pre-wrap; }
+    .term-input-line { display: flex; margin-top: 5px; }
+    .prompt { color: #4caf50; margin-right: 5px; font-weight: bold; }
+    .py-prompt { color: #ffd700; }
+    .term-input { background: transparent; border: none; color: #fff; outline: none; flex: 1; font-family: inherit; font-size: inherit; }
+    .error { color: #ff6b6b; }
+
+    /* File Explorer */
+    .fe-container { display: flex; height: 100%; flex-direction: column;}
+    .fe-toolbar { padding: 8px; border-bottom: 1px solid var(--border-color); display: flex; gap: 10px;}
+    .fe-path { padding: 4px 10px; border: 1px solid var(--border-color); flex: 1; border-radius: 4px; font-size: 12px; display: flex; align-items: center;}
+    .fe-body { display: flex; flex: 1; overflow: hidden; }
+    .fe-sidebar { width: 150px; border-right: 1px solid var(--border-color); padding: 10px; font-size: 13px; }
+    .fe-sidebar div { padding: 5px; cursor: pointer; border-radius: 4px; display: flex; gap: 8px; align-items: center;}
+    .fe-sidebar div:hover { background: rgba(128,128,128,0.1); }
+    .fe-content { flex: 1; padding: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); grid-auto-rows: min-content; gap: 15px; overflow-y: auto;}
+    .file-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; padding: 10px 5px; border-radius: 4px; text-align: center; min-height: 80px; justify-content: flex-start; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;}
+    .file-item:hover { background: rgba(128,128,128,0.1); }
+    .file-item:active { background: rgba(128,128,128,0.2); transform: scale(0.95); }
+    .file-item i { font-size: 32px; flex-shrink: 0; pointer-events: none; }
+    .file-item[data-type="folder"] i { color: #ffd66b; }
+    .file-item[data-type="txt"] i { color: #aaa; }
+    .file-item[data-type="js"] i, .file-item[data-type="py"] i { color: #519aba; }
+    .file-item[data-type="aiproject"] i { color: #ff6b9d; }
+    .file-item span { font-size: 11px; word-break: break-word; line-height: 1.3; max-width: 100%; overflow-wrap: break-word; hyphens: auto;}
+
+    /* Paint */
+    .paint-container { display: flex; flex-direction: column; height: 100%; }
+    .paint-toolbar { padding: 5px; border-bottom: 1px solid var(--border-color); display: flex; gap: 10px; align-items: center; background: rgba(128,128,128,0.05);}
+    canvas.paint-canvas { background: #fff; cursor: crosshair; display: block; margin: auto; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+    .color-btn { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 1px solid #ccc; }
+    .color-btn.active { border: 2px solid var(--text-color); transform: scale(1.1); }
+
+    /* VS Code (Monaco) container */
+    #monaco-container { width: 100%; height: calc(100% - 30px); }
+
+    /* Snake Game */
+    .game-container { background: #000; display: flex; justify-content: center; align-items: center; height: 100%; flex-direction: column; color: #0f0; font-family: 'Courier New', Courier, monospace;}
+    #game-canvas { border: 2px solid #0f0; box-shadow: 0 0 20px #0f0; background: #001100;}
+    .game-ui { display: flex; justify-content: space-between; width: 400px; margin-bottom: 10px; font-size: 18px; text-shadow: 0 0 5px #0f0;}
+    .game-over-overlay { position: absolute; top:50%; left:50%; transform: translate(-50%, -50%); text-align: center; display: none;}
+    .game-over-overlay h1 { font-size: 40px; color: red; text-shadow: 0 0 10px red; margin: 0;}
+    .neon-btn { border: 1px solid #0f0; color: #0f0; padding: 5px 15px; background: transparent; cursor: pointer; margin-top: 10px; box-shadow: 0 0 5px #0f0; }
+    .neon-btn:hover { background: #0f0; color: #000; }
+
+    /* Video Editor (Simulated) */
+    .vid-container { display: flex; flex-direction: column; height: 100%; background: #222; color: white; }
+    .vid-preview { flex: 1; display: flex; justify-content: center; align-items: center; background: #000; position: relative; overflow: hidden;}
+    .vid-timeline { height: 100px; border-top: 1px solid #444; padding: 10px; display: flex; flex-direction: column; gap: 5px;}
+    .vid-controls { display: flex; gap: 15px; justify-content: center; padding: 10px; background: #333; }
+    .trk { height: 30px; background: #4caf50; border-radius: 4px; position: relative; width: 80%; cursor: ew-resize;}
+    .trk::after { content: 'Clip 1.mp4'; position: absolute; left: 5px; top: 50%; transform: translateY(-50%); font-size: 10px; color: black;}
+    .playhead { position: absolute; height: 100%; width: 2px; background: red; left: 0; top:0; pointer-events: none;}
+    #vid-canvas { height: 90%; max-width: 100%; }
+    .vid-filters { display: flex; gap: 5px; padding: 5px;}
+    .filter-btn { font-size: 10px; padding: 2px 5px; cursor: pointer; background: #444; border: 1px solid #555; color: white;}
+    .filter-btn:hover { background: var(--accent-color); }
+
+    /* Windows Media Player Style */
+    .wmp-container {
+        display: flex; flex-direction: column; height: 100%; 
+        background: #ece9d8; font-family: 'Segoe UI', sans-serif;
+    }
+    .wmp-navbar {
+        background: #316ac5; height: 30px; display: flex;
+        align-items: center; padding: 0 5px; gap: 2px;
+    }
+    .wmp-nav-btn {
+        background: transparent; border: none; color: #fff;
+        padding: 4px 8px; cursor: pointer; font-size: 11px;
+    }
+    .wmp-nav-btn:hover { background: rgba(255,255,255,0.2); }
+    .wmp-nav-tab {
+        background: transparent; border: none; color: #fff;
+        padding: 5px 12px; cursor: pointer; font-size: 11px;
+        border-bottom: 2px solid transparent;
+    }
+    .wmp-nav-tab.active {
+        background: #fff; color: #316ac5; border-bottom: 2px solid #316ac5;
+    }
+    .wmp-main-area {
+        display: flex; flex: 1; overflow: hidden;
+    }
+    .wmp-display-area {
+        flex: 1; background: #000; display: flex;
+        flex-direction: column; justify-content: center;
+        align-items: center; position: relative;
+    }
+    .wmp-visualizer {
+        width: 100%; height: 100%; position: absolute;
+        opacity: 0.3;
+    }
+    .wmp-playlist-sidebar {
+        width: 200px; background: #f0f0f0; border-left: 1px solid #ccc;
+        padding: 15px; display: flex; flex-direction: column;
+    }
+    .wmp-playlist-empty {
+        text-align: center; color: #666; margin-top: 40px;
+    }
+    .wmp-playlist-empty-icon {
+        font-size: 48px; color: #ccc; margin-bottom: 10px;
+    }
+    .wmp-playlist-header {
+        display: flex; justify-content: space-between;
+        align-items: center; margin-bottom: 10px; font-size: 12px;
+        font-weight: bold; color: #333;
+    }
+    .wmp-playlist-list {
+        flex: 1; overflow-y: auto; background: #fff;
+        border: 1px solid #ccc; padding: 5px;
+    }
+    .wmp-playlist-item {
+        padding: 5px; font-size: 11px; color: #333;
+        cursor: pointer; border-bottom: 1px solid #eee;
+    }
+    .wmp-playlist-item:hover { background: #e8f4fd; }
+    .wmp-playlist-item.active {
+        background: #cce8ff; font-weight: bold;
+    }
+    .wmp-controls {
+        background: #ece9d8; border-top: 1px solid #ccc;
+        padding: 8px; display: flex; flex-direction: column;
+    }
+    .wmp-progress-bar {
+        height: 4px; background: #b0c4de; margin-bottom: 8px;
+        cursor: pointer; position: relative;
+    }
+    .wmp-progress-filled {
+        height: 100%; background: #0078d4; width: 0%;
+        transition: width 0.1s;
+    }
+    .wmp-controls-row {
+        display: flex; align-items: center; gap: 8px;
+    }
+    .wmp-control-btn {
+        background: transparent; border: none; cursor: pointer;
+        padding: 5px; color: #333; font-size: 14px;
+        display: flex; align-items: center; justify-content: center;
+        width: 28px; height: 28px;
+    }
+    .wmp-control-btn:hover { background: rgba(0,0,0,0.1); }
+    .wmp-control-btn.play {
+        width: 40px; height: 40px; background: #0078d4;
+        color: #fff; border-radius: 50%;
+        font-size: 20px;
+    }
+    .wmp-control-btn.play:hover { background: #005a9e; }
+    .wmp-volume-control {
+        display: flex; align-items: center; gap: 5px;
+        margin-left: auto;
+    }
+    .wmp-volume-slider {
+        width: 80px; height: 4px; background: #b0c4de;
+        cursor: pointer; position: relative;
+    }
+    .wmp-volume-filled {
+        height: 100%; background: #0078d4; width: 70%;
+    }
+    .wmp-track-info {
+        margin-left: 10px; font-size: 11px; color: #666;
+        min-width: 200px;
+    }
+    .wmp-track-name {
+        font-weight: bold; color: #333;
+    }
+    .wmp-youtube-link {
+        margin-left: 10px; padding: 6px 12px;
+        background: #ff0000; color: #fff; text-decoration: none;
+        border-radius: 3px; font-size: 11px; display: inline-flex;
+        align-items: center; gap: 5px;
+    }
+    .wmp-youtube-link:hover { background: #cc0000; }
+
+    /* Context Menu */
+    #context-menu { position: absolute; background: var(--window-bg); backdrop-filter: blur(20px); border: 1px solid var(--border-color); border-radius: 6px; box-shadow: var(--shadow); padding: 5px 0; display: none; z-index: 99999; width: 200px;}
+    .ctx-item { padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+    .ctx-item:hover { background: rgba(128,128,128,0.1); }
+    .ctx-hr { border-top: 1px solid var(--border-color); margin: 3px 0; }
+
+    /* BSOD */
+    #bsod { position: fixed; top:0; left:0; width:100%; height:100%; background: #0078d7; color: white; z-index: 100000; padding: 100px; font-family: 'Segoe UI', sans-serif; display: none; flex-direction: column; gap: 20px;}
+    #bsod h1 { font-size: 100px; font-weight: 100; margin: 0;}
+    #bsod p { font-size: 24px; }
+
+    /* About Me App Buttons */
+    button:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    button:active { transform: translateY(0); }
+
+    /* === MOBILE RESPONSIVE === */
+    @media (max-width: 768px) {
+        /* Taskbar adjustments */
+        #taskbar { height: 60px; padding: 0 10px; }
+        .taskbar-center { position: static; transform: none; flex: 1; justify-content: flex-start; overflow-x: auto; }
+        .tb-icon { min-width: 45px; min-height: 45px; }
+        .taskbar-right { font-size: 11px; gap: 8px; }
+        #clock { display: none; } /* Hide clock on mobile */
+        
+        /* Windows mobile */
+        .window { 
+            width: 100% !important; 
+            height: calc(100% - 60px) !important; 
+            top: 0 !important; 
+            left: 0 !important; 
+            border-radius: 0 !important;
+            resize: none !important;
+        }
+        .window.minimized { display: none; }
+        
+        /* Desktop icons - horizontal scroll */
+        #desktop-icons { 
+            flex-direction: row; 
+            width: 100%; 
+            height: auto; 
+            overflow-x: auto; 
+            overflow-y: hidden;
+            padding: 10px;
+            gap: 15px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .d-icon { 
+            min-width: 70px; 
+            min-height: 80px;
+            padding: 12px 8px;
+            touch-action: manipulation;
+        }
+        .d-icon i { font-size: 36px !important; }
+        .d-icon span { font-size: 11px !important; }
+        
+        /* Start Menu mobile */
+        #start-menu { 
+            width: 100%; 
+            height: 70vh; 
+            bottom: 60px; 
+            left: 0; 
+            transform: translateY(20px);
+            border-radius: 20px 20px 0 0;
+        }
+        #start-menu.open { transform: translateY(0); }
+        .pinned-apps { grid-template-columns: repeat(4, 1fr); }
+        
+        /* Terminal mobile */
+        .terminal { font-size: 12px; padding: 8px; }
+        
+        /* File Explorer mobile */
+        .fe-sidebar { width: 100px; font-size: 11px; padding: 5px; }
+        .fe-content { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px; }
+        
+        /* Paint canvas mobile */
+        canvas.paint-canvas { max-width: 100%; height: auto; }
+        
+        /* Calculator mobile */
+        #calc-display { font-size: 32px; }
+        
+        /* Context menu mobile */
+        #context-menu { width: 90%; max-width: 250px; }
+        
+        /* Game canvas mobile */
+        #game-canvas { width: 100% !important; max-width: 400px; }
+        
+        /* About Me mobile layout */
+        .about-me-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+        .about-me-photo { width: 200px !important; margin: 0 auto !important; position: static !important; }
+        .about-me-grid h1 { font-size: 32px !important; text-align: center; }
+        .about-me-grid > div:first-child { text-align: center; }
+        .about-me-grid p { font-size: 16px !important; }
+        
+        /* Music player mobile */
+        .wmp-container { font-size: 12px; }
+        .wmp-navbar { height: 25px !important; font-size: 10px; }
+        .wmp-nav-tab { padding: 4px 8px !important; font-size: 9px; }
+        .wmp-playlist-sidebar { width: 150px !important; padding: 10px !important; }
+        .wmp-display-area { min-height: 200px; }
+        .wmp-controls-row { flex-wrap: wrap; gap: 5px !important; }
+        .wmp-control-btn { width: 24px !important; height: 24px !important; font-size: 12px !important; }
+        .wmp-control-btn.play { width: 36px !important; height: 36px !important; font-size: 18px !important; }
+        .wmp-track-info { min-width: 150px !important; font-size: 10px; }
+        .wmp-youtube-link { font-size: 9px; padding: 4px 8px; }
+        .wmp-volume-slider { width: 60px !important; }
+        
+        /* Notepad mobile */
+        textarea.notepad-area { font-size: 14px; }
+    }
+    
+    @media (max-width: 480px) {
+        #taskbar { height: 50px; }
+        .tb-icon { min-width: 40px; min-height: 40px; font-size: 18px; }
+        .pinned-apps { grid-template-columns: repeat(3, 1fr); }
+        #start-menu { height: 80vh; }
+        .d-icon { font-size: 11px; min-width: 60px; }
+        .fe-sidebar { display: none; } /* Hide sidebar on very small screens */
+        .window { height: calc(100% - 50px) !important; }
+        
+        /* Boot screen mobile */
+        #boot-screen i { font-size: 48px !important; margin-bottom: 30px !important; }
+        #boot-text { font-size: 14px; }
+        
+        /* BSOD mobile */
+        #bsod { padding: 40px 20px; }
+        #bsod h1 { font-size: 60px !important; }
+        #bsod p { font-size: 16px !important; }
+        
+        /* About Me mobile adjustments */
+        .about-me-grid h1 { font-size: 28px !important; }
+        .about-me-photo { width: 150px !important; }
+        
+        /* Music player mobile - smaller screens */
+        .wmp-display-area { min-height: 150px !important; }
+        .wmp-playlist-sidebar { width: 120px !important; }
+        .wmp-navbar { font-size: 9px !important; }
+        .wmp-control-btn { width: 20px !important; height: 20px !important; }
+        .wmp-control-btn.play { width: 32px !important; height: 32px !important; }
+        .wmp-track-info { min-width: 100px !important; font-size: 9px; }
+    }
+
+</style>
+</head>
+<body>
+
+<!-- Boot Screen -->
+<div id="boot-screen">
+    <i class="fa-brands fa-windows" style="font-size: 64px; margin-bottom: 40px; color: #00a2ed;"></i>
+    <div class="spinner"></div>
+    <div id="boot-text">Starting AfsalOS...</div>
+</div>
+
+<!-- BSOD (Hidden) -->
+<div id="bsod">
+    <h1>:(</h1>
+    <p>Your PC ran into a problem and needs to restart. We're just collecting some error info, and then we'll restart for you.</p>
+    <p style="font-size: 16px; margin-top: 30px;">Stop Code: CRITICAL_PROCESS_DIED</p>
+</div>
+
+<!-- Desktop Environment -->
+<div id="desktop">
+    <div id="desktop-icons">
+        <!-- Icons generated by JS based on VFS -->
+    </div>
+
+    <div id="windows-container"></div> <!-- Windows spawn here -->
+    <div id="context-menu"></div>
+</div>
+
+<!-- Start Menu -->
+<div id="start-menu">
+    <div class="search-bar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" placeholder="Type here to search">
+    </div>
+    <div style="font-weight: 600; margin-bottom: 10px; font-size: 14px;">Pinned</div>
+    <div class="pinned-apps" id="start-apps">
+        <!-- Populated by JS -->
+    </div>
+    <div style="margin-top: auto; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 32px; height: 32px; background: #555; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white;"><i class="fa-solid fa-user"></i></div>
+            <span style="font-size: 12px; font-weight: 600;">User</span>
+        </div>
+        <i class="fa-solid fa-power-off" style="cursor: pointer; padding: 8px;" onclick="triggerBSOD()"></i>
+    </div>
+</div>
+
+<!-- Taskbar -->
+<div id="taskbar">
+    <div style="display: flex; gap: 5px;">
+        <!-- Widgets placeholder -->
+    </div>
+    <div class="taskbar-center">
+        <div class="tb-icon" id="start-btn"><i class="fa-brands fa-windows"></i></div>
+        <!-- Open apps appended here -->
+    </div>
+    <div class="taskbar-right">
+        <i class="fa-solid fa-wifi"></i>
+        <i class="fa-solid fa-volume-high"></i>
+        <div id="clock">
+            <div id="time" style="font-weight: 600;"></div>
+            <div id="date"></div>
+        </div>
+        <div style="width: 5px; border-left: 1px solid var(--border-color); height: 100%; margin-left: 5px; cursor: pointer;" onclick="WindowManager.minimizeAll()"></div>
+    </div>
+</div>
+
+<script>
+    /* --- SYSTEM CORE & VIRTUAL FILE SYSTEM --- */
+    
+    // Define Application Metadata
+    const AppRegistry = {
+        'about-me': { title: 'About Me', icon: 'fa-solid fa-user-circle', color: '#00a2ed', func: createAboutMe },
+        'file-explorer': { title: 'File Explorer', icon: 'fa-solid fa-folder-open', color: '#ffd66b', func: createFileExplorer },
+        'notepad': { title: 'Notepad', icon: 'fa-solid fa-file-lines', color: '#4cc2ff', func: createNotepad },
+        'terminal': { title: 'Terminal', icon: 'fa-solid fa-terminal', color: '#00ff00', func: createTerminal },
+        'vscode': { title: 'Code Editor', icon: 'fa-solid fa-code', color: '#0078d4', func: createVSCode },
+        'paint': { title: 'Paint', icon: 'fa-solid fa-palette', color: '#e05194', func: createPaint },
+        'my-music': { title: 'My Music', icon: 'fa-solid fa-music', color: '#ff6b9d', func: createMusicPlayer },
+        'calculator': { title: 'Calculator', icon: 'fa-solid fa-calculator', color: '#0078d4', func: createCalculator },
+        'game': { title: 'Cyber Snake', icon: 'fa-solid fa-gamepad', color: '#adff2f', func: createGame },
+        'ai-project': { title: 'AI Project', icon: 'fa-solid fa-robot', color: '#ff6b9d', func: createAIProject }
+    };
+
+    // In-memory Virtual File System
+    const VFS = {
+        root: {
+            type: 'folder',
+            children: {
+                'Desktop': {
+                    type: 'folder',
+                    children: {
+                        'Getting Started.txt': { type: 'file', ext: 'txt', content: '🚀 GETTING STARTED WITH AFSALOS\n\nWelcome! This is an interactive portfolio designed like a Windows OS.\n\n✨ THINGS TO TRY:\n\n📂 Double-click folders on desktop\n   • "AI Experiments" - See my AI experiments\n\n💻 Open Terminal and type:\n   • "aboutme" - Learn about me\n   • "skills" - See my tech stack\n   • "music" - Get music links\n   • "contact" - Reach out to me\n   • "help" - See all commands\n\n🎵 Click "My Music" to hear my latest track\n\n📝 Files like this open in Notepad\n\n🎨 Try the Paint, Calculator, or Snake Game apps!\n\n---\n\nEverything runs in your browser - no installation needed.\nFeel free to explore and click around!\n\n- Afsal' },
+                        'Get in Touch.txt': { type: 'file', ext: 'txt', content: '📧 GET IN TOUCH\n\nEmail: afsal@policyinsure.com\n\nLinkedIn: https://www.linkedin.com/in/mohammed-afsal/\n\nInstagram: https://www.instagram.com/afsal.tech/\n\nYouTube: https://youtu.be/nhR-IMZUcWk\n\n---\n\nFeel free to reach out! Always open to discussing AI, technology, music, and exciting opportunities.' },
+                        'AI Experiments': { 
+                            type: 'folder', 
+                            children: {
+                                'Voice AI Calling Agent': { type: 'file', ext: 'aiproject', projectType: 'voice-ai', videoPath: 'public/VoiceAI.mp4', title: 'Voice AI Calling Agent', icon: 'fa-solid fa-phone', description: 'An enterprise-grade voice AI calling agent designed for corporate lead nurturing and qualification. This intelligent system autonomously calls leads on behalf of businesses, engaging them in natural conversations to provide company information, answer questions, and intelligently qualify leads based on their responses and interest level. This demo showcases a real production call for Edwise International, demonstrating how AI can handle complex conversations, understand context, and effectively nurture leads while identifying high-value prospects for the sales team.' },
+                                'AI Padel Coach': { type: 'file', ext: 'aiproject', projectType: 'padel-coach', videoPath: 'public/AI Padel Coach.mp4', title: 'AI Padel Coach', icon: 'fa-solid fa-baseball-bat-ball', description: 'A paddle coach where you upload your game (could be paddle tennis, could be pickleball, could be tennis, could be anything). You upload a video of you playing, and then the tool gives you professional-level guidance like how a coach would guide you in that sort.' },
+                                'Virtual Closet': { type: 'file', ext: 'aiproject', projectType: 'virtual-closet', videoPath: 'public/Virtual Colset.mp4', title: 'Virtual Closet', icon: 'fa-solid fa-shirt', description: 'An AI-powered virtual try-on experience that lets you see how clothes would look on you with ultra-realistic precision. Simply upload your picture and paste a product link from any e-commerce platform like Myntra, Amazon, or Flipkart. Within seconds, the AI generates a photorealistic visualization showing exactly how that outfit would fit and look on you, revolutionizing online shopping by eliminating guesswork and returns.' }
+                            }
+                        }
+                    }
+                },
+                'Documents': { type: 'folder', children: {} },
+                'Pictures': { type: 'folder', children: {} }
+            }
+        },
+        // Helper to get path content
+        Resolve: function(path) {
+            let parts = path.split('/').filter(p => p);
+            let current = this.root;
+            for (let part of parts) {
+                if (current.type === 'folder' && current.children[part]) {
+                    current = current.children[part];
+                } else {
+                    return null;
+                }
+            }
+            return current;
+        }
+    };
+
+    /* --- WINDOW MANAGER --- */
+    let zIndexCounter = 100;
+    let activeWindows = {}; // id -> { element, taskbarEntry, minimized }
+
+    const WindowManager = {
+        open: function(appId, filePath = null) {
+            const app = AppRegistry[appId];
+            if (!app) return;
+
+            const id = 'win-' + Date.now();
+            zIndexCounter++;
+
+            // Basic Window HTML
+            const win = document.createElement('div');
+            win.className = 'window';
+            win.id = id;
+            win.style.zIndex = zIndexCounter;
+            win.style.left = (50 + (Object.keys(activeWindows).length * 50)) + 'px';
+            win.style.top = (50 + (Object.keys(activeWindows).length * 50)) + 'px';
+            win.style.width = '800px';
+            win.style.height = '500px';
+
+            let specificTitle = app.title;
+            if(filePath) specificTitle += ` - ${filePath.split('/').pop()}`;
+
+            win.innerHTML = `
+                <div class="title-bar">
+                    <div class="title-bar-text"><i class="${app.icon}" style="color: ${app.color}"></i> ${specificTitle}</div>
+                    <div class="window-controls">
+                        <div class="win-btn" onclick="WindowManager.minimize('${id}')"><i class="fa-solid fa-minus"></i></div>
+                        <div class="win-btn" onclick="WindowManager.maximize('${id}')"><i class="fa-regular fa-square"></i></div>
+                        <div class="win-btn close" onclick="WindowManager.close('${id}')"><i class="fa-solid fa-xmark"></i></div>
+                    </div>
+                </div>
+                <div class="window-content" id="${id}-content"></div>
+            `;
+            
+            document.getElementById('windows-container').appendChild(win);
+            
+            // Initialize drag and focus logic
+            this.makeDraggable(win);
+            win.addEventListener('mousedown', () => this.focus(id));
+
+            // Add to Taskbar
+            const tbIcon = document.createElement('div');
+            tbIcon.className = 'tb-icon active';
+            tbIcon.id = id + '-tb';
+            tbIcon.innerHTML = `<i class="${app.icon}" style="color: ${app.color}"></i>`;
+            tbIcon.onclick = () => this.toggle(id);
+            document.querySelector('.taskbar-center').appendChild(tbIcon);
+
+            activeWindows[id] = { element: win, tbIcon: tbIcon, minimized: false };
+
+            // Run App Logic to fill content
+            app.func(document.getElementById(`${id}-content`), filePath, id);
+            
+            return id; // Return the window ID
+        },
+
+        close: function(id) {
+            if(activeWindows[id]) {
+                activeWindows[id].element.remove();
+                activeWindows[id].tbIcon.remove();
+                delete activeWindows[id];
+            }
+        },
+
+        minimize: function(id) {
+            activeWindows[id].element.classList.add('minimized');
+            activeWindows[id].tbIcon.classList.remove('active');
+            activeWindows[id].minimized = true;
+        },
+
+        maximize: function(id) {
+            activeWindows[id].element.classList.toggle('maximized');
+        },
+
+        focus: function(id) {
+            zIndexCounter++;
+            activeWindows[id].element.style.zIndex = zIndexCounter;
+            // Update Menu Bars in real OS, here just visuals
+            Object.values(activeWindows).forEach(w => w.tbIcon.classList.remove('active'));
+            if (!activeWindows[id].minimized) {
+                activeWindows[id].tbIcon.classList.add('active');
+            }
+        },
+
+        toggle: function(id) {
+            if (activeWindows[id].minimized) {
+                activeWindows[id].element.classList.remove('minimized');
+                activeWindows[id].minimized = false;
+                this.focus(id);
+            } else if (activeWindows[id].element.style.zIndex == zIndexCounter) {
+                this.minimize(id);
+            } else {
+                this.focus(id);
+            }
+        },
+
+        minimizeAll: function() {
+            Object.keys(activeWindows).forEach(id => this.minimize(id));
+        },
+
+        makeDraggable: function(el) {
+            let titleBar = el.querySelector('.title-bar');
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            titleBar.addEventListener('mousedown', (e) => {
+                if(e.target.closest('.window-controls')) return; // Don't drag if clicking buttons
+                if(el.classList.contains('maximized')) return;
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = el.offsetLeft;
+                initialTop = el.offsetTop;
+                document.body.style.cursor = 'grabbing';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                el.style.left = (initialLeft + e.clientX - startX) + 'px';
+                el.style.top = (initialTop + e.clientY - startY) + 'px';
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                document.body.style.cursor = 'default';
+            });
+        }
+    };
+
+    /* --- APP IMPLEMENTATIONS --- */
+
+    // 0. ABOUT ME
+    function createAboutMe(container) {
+        container.style.background = 'var(--window-bg)';
+        container.innerHTML = `
+            <div style="height: 100%; overflow-y: auto; padding: 40px 20px;">
+                <div style="max-width: 1000px; margin: 0 auto;">
+                    <!-- Main Layout: Left Photo, Right Content -->
+                    <div class="about-me-grid" style="display: grid; grid-template-columns: 300px 1fr; gap: 40px; align-items: start; margin-bottom: 40px;">
+                        <!-- Left: Photo -->
+                        <div style="position: sticky; top: 20px;">
+                            <div class="about-me-photo" style="width: 100%; aspect-ratio: 1; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border: 4px solid var(--accent-color);">
+                                <img src="public/afsal.jpg" alt="Afsal" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                        </div>
+                        
+                        <!-- Right: Content -->
+                        <div>
+                            <h1 style="font-size: 42px; margin: 0 0 10px 0; color: var(--text-color); font-weight: 600;">Mohammed Afsal</h1>
+                            <p style="font-size: 20px; color: #888; margin: 0 0 30px 0;">Builder • AI Enthusiast • Music Creator</p>
+                            
+                            <p style="font-size: 18px; line-height: 1.7; margin: 0 0 25px 0; color: var(--text-color);">
+                                Hey there! 👋 I'm a multidisciplinary creator passionate about pushing the boundaries of what's possible with technology. 
+                                From AI-powered solutions to web experiences and music production, I thrive on bringing creative ideas to life.
+                            </p>
+                            
+                            <p style="font-size: 18px; line-height: 1.7; margin: 0 0 30px 0; color: var(--text-color);">
+                                This portfolio itself is an entire operating system simulation running in your browser - built with a single HTML file. 
+                                Feel free to explore, click around, and discover what I've been working on!
+                            </p>
+
+                            <!-- Quick Action Cards -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                                <div onclick="WindowManager.open('my-music')" style="padding: 20px; background: rgba(0, 162, 237, 0.1); border-radius: 10px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; text-align: center;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.1)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                                    <div style="font-size: 32px; margin-bottom: 8px;">🎵</div>
+                                    <div style="font-weight: 600; color: var(--accent-color);">My Music</div>
+                                </div>
+                                
+                                <div onclick="WindowManager.open('file-explorer', 'Desktop/AI Experiments');" style="padding: 20px; background: rgba(255, 214, 107, 0.1); border-radius: 10px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; text-align: center;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.1)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                                    <div style="font-size: 32px; margin-bottom: 8px;">🤖</div>
+                                    <div style="font-weight: 600; color: #ffd66b;">AI Experiments</div>
+                                </div>
+                                
+                                <div onclick="WindowManager.open('notepad', 'Desktop/Get in Touch.txt')" style="padding: 20px; background: rgba(255, 107, 157, 0.1); border-radius: 10px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; text-align: center;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.1)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                                    <div style="font-size: 32px; margin-bottom: 8px;">📧</div>
+                                    <div style="font-weight: 600; color: #ff6b9d;">Get in Touch</div>
+                                </div>
+                            </div>
+
+                            <!-- Skills Tags -->
+                            <div style="margin-top: 25px;">
+                                <div style="font-weight: 600; margin-bottom: 10px; color: var(--text-color); font-size: 14px; text-transform: uppercase; opacity: 0.7;">What I Work With</div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    <span style="padding: 6px 14px; background: rgba(128,128,128,0.1); border-radius: 20px; font-size: 13px; color: var(--text-color);">AI & ML</span>
+                                    <span style="padding: 6px 14px; background: rgba(128,128,128,0.1); border-radius: 20px; font-size: 13px; color: var(--text-color);">Web Development</span>
+                                    <span style="padding: 6px 14px; background: rgba(128,128,128,0.1); border-radius: 20px; font-size: 13px; color: var(--text-color);">Full-Stack</span>
+                                    <span style="padding: 6px 14px; background: rgba(128,128,128,0.1); border-radius: 20px; font-size: 13px; color: var(--text-color);">Music Production</span>
+                                    <span style="padding: 6px 14px; background: rgba(128,128,128,0.1); border-radius: 20px; font-size: 13px; color: var(--text-color);">Creative Coding</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 1. NOTEPAD
+    function createNotepad(container, filePath, winId) {
+        // Check if this is "Get in Touch.txt" - render with clickable links
+        if(filePath && filePath.includes('Get in Touch.txt')) {
+            let fileObj = VFS.Resolve(filePath);
+            if(fileObj) {
+                let content = fileObj.content;
+                // Convert URLs and email to clickable links
+                content = content.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color: #0078d4; text-decoration: underline; cursor: pointer;">$1</a>');
+                content = content.replace(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/g, '<a href="mailto:$1" style="color: #0078d4; text-decoration: underline; cursor: pointer;">$1</a>');
+                // Preserve line breaks
+                content = content.replace(/\n/g, '<br>');
+                
+                container.innerHTML = `
+                    <div class="app-menu">
+                        <div class="menu-item">File</div>
+                        <div class="menu-item">Edit</div>
+                        <div class="menu-item">Format</div>
+                    </div>
+                    <div style="padding: 10px; height: calc(100% - 30px); overflow-y: auto; font-family: monospace; white-space: pre-wrap; user-select: text; color: var(--text-color);">${content}</div>
+                `;
+                return;
+            }
+        }
+        
+        // Regular notepad with textarea
+        container.innerHTML = `
+            <div class="app-menu">
+                <div class="menu-item">File</div>
+                <div class="menu-item">Edit</div>
+                <div class="menu-item">Format</div>
+            </div>
+            <textarea class="notepad-area" spellcheck="false"></textarea>
+        `;
+        const ta = container.querySelector('textarea');
+        if(filePath) {
+            let fileObj = VFS.Resolve(filePath);
+            if(fileObj) ta.value = fileObj.content;
+        }
+        ta.focus();
+    }
+
+    // 2. TERMINAL (Simulated Python/Bash)
+    function createTerminal(container) {
+        const welcomeMessage = `Welcome to AfsalOS Terminal [Version 1.0]
+
+Type 'help' for available commands
+Type 'aboutme' to learn about me
+Type 'python' to switch to Python mode
+
+`;
+        container.innerHTML = `<div class="terminal" id="term-${Date.now()}"><div class="term-output">${welcomeMessage}</div></div>`;
+        const term = container.firstChild;
+        let currentPath = '/Desktop';
+        let mode = 'sh'; // sh or python
+
+        function createInputLine() {
+            const line = document.createElement('div');
+            line.className = 'term-input-line';
+            const promptTxt = mode === 'sh' ? `afsal@AfsalOS:${currentPath}$` : '>>>';
+            line.innerHTML = `<span class="prompt ${mode==='python'?'py-prompt':''}">${promptTxt}</span><input type="text" class="term-input" spellcheck="false">`;
+            term.appendChild(line);
+            const input = line.querySelector('input');
+            input.focus();
+            term.scrollTop = term.scrollHeight;
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    this.disabled = true;
+                    processCommand(this.value);
+                }
+            });
+            container.closest('.window').addEventListener('click', () => { if(!input.disabled) input.focus(); });
+        }
+
+        function output(text, isError=false) {
+            const div = document.createElement('div');
+            div.className = isError ? 'error' : '';
+            div.textContent = text;
+            term.appendChild(div);
+        }
+
+        function processCommand(cmd) {
+            cmd = cmd.trim();
+            if (cmd === '') { createInputLine(); return; }
+
+            if (mode === 'sh') {
+                const args = cmd.split(' ');
+                switch(args[0].toLowerCase()) {
+                    case 'help': 
+                        output('Available commands:\n\nNavigation: ls, cd, clear, whoami, python\nApps: open <app>\nPortfolio: aboutme, skills, projects, music, contact, getintouch\n\nTry these commands to learn more about me!'); 
+                        break;
+                    case 'clear': term.innerHTML = '<div class="term-output"></div>'; break;
+                    case 'echo': output(args.slice(1).join(' ')); break;
+                    case 'whoami': output('afsal'); break;
+                    case 'aboutme':
+                        output('👋 Hi! I\'m Mohammed Afsal\n\nI\'m a builder, AI enthusiast, and music creator.\nI love exploring technology, creating innovative solutions, and making music.\n\nType "skills" to see what I work with\nType "projects" to see what I\'ve built\nType "music" to hear my latest track\nType "contact" to get in touch!');
+                        break;
+                    case 'skills':
+                        output('🛠️ Skills & Technologies:\n\n• AI & Machine Learning\n• Web Development\n• Full-Stack Development\n• Music Production\n• Creative Coding\n\nAlways learning and exploring new technologies!');
+                        break;
+                    case 'projects':
+                        output('🚀 My Projects:\n\nCheck out my AI Experiments folder on the desktop!\nOr type: open file-explorer\n\nI build:\n• AI-powered applications\n• Web platforms\n• Creative experiments\n\nMore projects coming soon!');
+                        break;
+                    case 'music':
+                        output('🎵 My Music:\n\nI create music! Listen to my latest track:\nYouTube: https://youtu.be/nhR-IMZUcWk\nInstagram: https://www.instagram.com/afsal.tech/\n\nOr type: open my-music');
+                        break;
+                    case 'contact':
+                    case 'getintouch':
+                        output('📧 Get in Touch:\n\nEmail: afsal@policyinsure.com\nLinkedIn: https://www.linkedin.com/in/mohammed-afsal/\nInstagram: https://www.instagram.com/afsal.tech/\n\nFeel free to reach out! Always open to discussing\nAI, technology, music, and exciting opportunities.');
+                        break;
+                    case 'linkedin':
+                        output('🔗 LinkedIn: https://www.linkedin.com/in/mohammed-afsal/');
+                        break;
+                    case 'instagram':
+                        output('📸 Instagram: https://www.instagram.com/afsal.tech/');
+                        break;
+                    case 'ls': 
+                        let dir = VFS.Resolve(currentPath);
+                        output(Object.keys(dir.children).map(k => {
+                            return dir.children[k].type === 'folder' ? k + '/' : k;
+                        }).join('  '));
+                        break;
+                    case 'python': 
+                        mode = 'python';
+                        output('Python 3.10.0 (default, Oct 10 2023) [MSC v.1916 64 bit (AMD64)] on win32\nType "help", "copyright", "credits" or "license" for more information.\nType "exit()" to return to shell.');
+                        break;
+                    case 'open':
+                        if(args[1] && AppRegistry[args[1]]) WindowManager.open(args[1]);
+                        else output('App not found. usage: open [notepad|paint|game...]','err');
+                        break;
+                    default: output(`Command not found: ${args[0]}\nType "help" for available commands.`, true);
+                }
+            } else if (mode === 'python') {
+                if (cmd === 'exit()') { mode = 'sh'; }
+                else {
+                    try {
+                        // Safe(ish) eval for demo purposes. 
+                        // In production, never use eval. Use a JS parser library.
+                        // Mapping JS math to appear somewhat pythonesque
+                        let result = eval(cmd);
+                        if (result !== undefined) output(String(result));
+                    } catch (e) {
+                        output(`Traceback (most recent call last):\n  File "<stdin>", line 1, in <module>\n${e.name}: ${e.message}`, true);
+                    }
+                }
+            }
+            createInputLine();
+        }
+
+        createInputLine();
+    }
+
+    // 3. FILE EXPLORER
+    function createFileExplorer(container, filePath) {
+        let currentPath = filePath || 'Desktop';
+        container.innerHTML = `
+            <div class="fe-container">
+                <div class="fe-toolbar">
+                    <button onclick="this.closest('.fe-container').dispatchEvent(new CustomEvent('navup'))"><i class="fa-solid fa-arrow-up"></i></button>
+                    <div class="fe-path"><i class="fa-solid fa-computer" style="margin-right:5px"></i> This PC > ${currentPath}</div>
+                </div>
+                <div class="fe-body">
+                    <div class="fe-sidebar">
+                        <div onclick="this.closest('.fe-container').dispatchEvent(new CustomEvent('navto', {detail: 'Desktop'}))"><i class="fa-solid fa-desktop" style="color: #0078d4;"></i> Desktop</div>
+                        <div onclick="this.closest('.fe-container').dispatchEvent(new CustomEvent('navto', {detail: 'Documents'}))"><i class="fa-solid fa-file" style="color: #fce100;"></i> Documents</div>
+                        <div onclick="this.closest('.fe-container').dispatchEvent(new CustomEvent('navto', {detail: 'Pictures'}))"><i class="fa-solid fa-image" style="color: #00ca7d;"></i> Pictures</div>
+                    </div>
+                    <div class="fe-content"></div>
+                </div>
+            </div>
+        `;
+
+        const contentArea = container.querySelector('.fe-content');
+        const pathDisplay = container.querySelector('.fe-path');
+
+        function render() {
+            contentArea.innerHTML = '';
+            // Format path display nicely
+            const pathParts = currentPath.split('/');
+            const displayPath = pathParts.join(' > ');
+            pathDisplay.innerHTML = `<i class="fa-solid fa-computer" style="margin-right:5px"></i> This PC > ${displayPath}`;
+            const dir = VFS.Resolve(currentPath);
+            if(!dir || dir.type !== 'folder') return;
+
+            for (let key in dir.children) {
+                const item = dir.children[key];
+                const el = document.createElement('div');
+                el.className = 'file-item';
+                
+                let icon = 'fa-file';
+                let typeStr = 'file';
+                if (item.type === 'folder') { icon = 'fa-folder'; typeStr = 'folder'; }
+                else if (item.ext === 'txt') { icon = 'fa-file-lines'; typeStr = 'txt'; }
+                else if (item.ext === 'js' || item.ext === 'py') { icon = 'fa-file-code'; typeStr = item.ext; }
+                else if (item.ext === 'aiproject') { 
+                    // Use custom icon if specified, otherwise default to robot icon
+                    icon = item.icon || 'fa-solid fa-robot'; 
+                    typeStr = 'aiproject'; 
+                }
+
+                el.setAttribute('data-type', typeStr);
+                // Handle icon format - if it already includes 'fa-solid', use as-is, otherwise add it
+                const iconClass = icon.includes('fa-solid') ? icon : `fa-solid ${icon}`;
+                el.innerHTML = `<i class="${iconClass}"></i><span>${key}</span>`;
+                
+                const handleFileClick = () => {
+                    if(item.type === 'folder') {
+                        currentPath += '/' + key;
+                        render();
+                    } else {
+                        // Open file based on extension
+                        if(item.ext === 'txt') WindowManager.open('notepad', currentPath + '/' + key);
+                        if(item.ext === 'js') WindowManager.open('vscode', currentPath + '/' + key);
+                        if(item.ext === 'aiproject') WindowManager.open('ai-project', currentPath + '/' + key);
+                    }
+                };
+                
+                // Handle both double-click (desktop) and single tap (mobile)
+                const isMobile = window.innerWidth <= 768;
+                if(isMobile) {
+                    el.addEventListener('click', handleFileClick);
+                } else {
+                    el.ondblclick = handleFileClick;
+                }
+                contentArea.appendChild(el);
+            }
+        }
+
+        container.querySelector('.fe-container').addEventListener('navup', () => {
+            if(!currentPath.includes('/')) return;
+            currentPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+            render();
+        });
+
+        container.querySelector('.fe-container').addEventListener('navto', (e) => {
+            currentPath = e.detail;
+            render();
+        });
+
+        render();
+    }
+
+    // 4. PAINT
+    function createPaint(container) {
+        container.innerHTML = `
+            <div class="paint-container">
+                <div class="paint-toolbar">
+                    <div class="color-btn active" style="background: black;" data-c="#000"></div>
+                    <div class="color-btn" style="background: red;" data-c="#f00"></div>
+                    <div class="color-btn" style="background: blue;" data-c="#00f"></div>
+                    <div class="color-btn" style="background: green;" data-c="#0f0"></div>
+                    <div class="color-btn" style="background: white;" data-c="#fff" title="Eraser"></div>
+                    <div style="border-left: 1px solid #ccc; height: 20px; margin: 0 5px;"></div>
+                    Size: <input type="range" min="1" max="20" value="5" id="brush-size">
+                    <button id="clear-btn" style="margin-left: auto;">Clear</button>
+                </div>
+                <div style="flex:1; overflow: auto; padding: 10px; background: #ccc;">
+                    <canvas class="paint-canvas" width="800" height="600"></canvas>
+                </div>
+            </div>
+        `;
+
+        const canvas = container.querySelector('canvas');
+        const ctx = canvas.getContext('2d');
+        let painting = false;
+        let color = '#000';
+        let lineWidth = 5;
+
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.lineCap = 'round';
+
+        // Toolbar logic
+        container.querySelectorAll('.color-btn').forEach(btn => {
+            btn.onclick = function() {
+                container.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                color = this.getAttribute('data-c');
+            }
+        });
+        container.querySelector('#brush-size').oninput = function() { lineWidth = this.value; };
+        container.querySelector('#clear-btn').onclick = function() { ctx.fillRect(0, 0, canvas.width, canvas.height); };
+
+        function draw(e) {
+            if (!painting) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            ctx.lineWidth = lineWidth;
+            ctx.strokeStyle = color;
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        canvas.addEventListener('mousedown', (e) => { painting = true; draw(e); });
+        canvas.addEventListener('mouseup', () => { painting = false; ctx.beginPath(); });
+        canvas.addEventListener('mousemove', draw);
+    }
+
+    // 5. VS CODE (Monaco)
+    function createVSCode(container, filePath) {
+        container.innerHTML = `<div class="app-menu"><div class="menu-item">File</div><div class="menu-item">Run</div></div><div id="monaco-container"></div>`;
+        
+        // Check if Monaco is loaded
+        if(typeof monaco === 'undefined') {
+            container.querySelector('#monaco-container').innerHTML = '<div style="padding:20px; color: red;">Internet required to load Monaco Editor.</div>';
+            return;
+        }
+
+        let initialContent = '// Type your JavaScript here\nconsole.log("Hello AuraOS!");';
+        let lang = 'javascript';
+        
+        if(filePath) {
+            let f = VFS.Resolve(filePath);
+            if(f) { initialContent = f.content; lang = f.ext === 'js' ? 'javascript' : 'plaintext'; }
+        }
+
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            let editor = monaco.editor.create(container.querySelector('#monaco-container'), {
+                value: initialContent,
+                language: lang,
+                theme: 'vs-dark',
+                automaticLayout: true
+            });
+        });
+    }
+
+    // 6. GAME (Cyber Snake)
+    function createGame(container, fp, winId) {
+        container.innerHTML = `
+            <div class="game-container">
+                <div class="game-ui"><span>Score: <span id="score">0</span></span><span>High: <span id="hiscore">0</span></span></div>
+                <canvas id="game-canvas" width="400" height="400"></canvas>
+                <div style="margin-top: 10px; font-size: 12px;">Use Arrow Keys</div>
+                <div class="game-over-overlay" id="go-screen">
+                    <h1>GAME OVER</h1>
+                    <button class="neon-btn" onclick="this.parentElement.dispatchEvent(new Event('restart'))">RESTART</button>
+                </div>
+            </div>
+        `;
+        
+        const canvas = container.querySelector('canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = container.querySelector('#score');
+        const goScreen = container.querySelector('#go-screen');
+        
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+        let snake = [{x: 10, y: 10}];
+        let food = {x: 15, y: 15};
+        let dx = 0;
+        let dy = 0;
+        let score = 0;
+        let gameLoop;
+        let running = false;
+
+        function drawGame() {
+            // Move
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            
+            // Collision detection
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount || snake.some(s => s.x === head.x && s.y === head.y)) {
+                gameOver();
+                return;
+            }
+
+            if(dx !== 0 || dy !== 0) {
+                snake.unshift(head);
+                // Eat food
+                if (head.x === food.x && head.y === food.y) {
+                    score += 10;
+                    scoreEl.innerText = score;
+                    placeFood();
+                } else {
+                    snake.pop();
+                }
+            }
+
+            // Draw
+            ctx.fillStyle = '#001100'; // BG
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Grid effect
+            ctx.strokeStyle = '#003300';
+            ctx.lineWidth = 0.5;
+            for(let i=0; i<tileCount; i++) {
+                ctx.beginPath(); ctx.moveTo(i*gridSize, 0); ctx.lineTo(i*gridSize, canvas.height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, i*gridSize); ctx.lineTo(canvas.width, i*gridSize); ctx.stroke();
+            }
+
+            // Snake
+            ctx.fillStyle = '#0f0';
+            ctx.shadowBlur = 10; ctx.shadowColor = '#0f0';
+            snake.forEach(part => ctx.fillRect(part.x * gridSize + 1, part.y * gridSize + 1, gridSize - 2, gridSize - 2));
+            
+            // Food
+            ctx.fillStyle = '#ff00ff';
+            ctx.shadowColor = '#ff00ff';
+            ctx.fillRect(food.x * gridSize + 1, food.y * gridSize + 1, gridSize - 2, gridSize - 2);
+            ctx.shadowBlur = 0;
+        }
+
+        function placeFood() {
+            food = { x: Math.floor(Math.random() * tileCount), y: Math.floor(Math.random() * tileCount) };
+            // Ensure not on snake
+            if(snake.some(s => s.x === food.x && s.y === food.y)) placeFood();
+        }
+
+        function gameOver() {
+            clearInterval(gameLoop);
+            running = false;
+            goScreen.style.display = 'block';
+        }
+
+        function startGame() {
+            snake = [{x: 10, y: 10}]; dx = 1; dy = 0; score = 0; scoreEl.innerText = 0;
+            placeFood();
+            goScreen.style.display = 'none';
+            running = true;
+            if(gameLoop) clearInterval(gameLoop);
+            gameLoop = setInterval(drawGame, 100);
+        }
+
+        // Input handling attached to document, need to check if this window is focused
+        const keyHandler = (e) => {
+            if(!running || document.getElementById(winId).style.zIndex != zIndexCounter) return;
+            switch (e.key) {
+                case 'ArrowUp': if (dy === 0) { dx = 0; dy = -1; } break;
+                case 'ArrowDown': if (dy === 0) { dx = 0; dy = 1; } break;
+                case 'ArrowLeft': if (dx === 0) { dx = -1; dy = 0; } break;
+                case 'ArrowRight': if (dx === 0) { dx = 1; dy = 0; } break;
+            }
+        };
+        document.addEventListener('keydown', keyHandler);
+        
+        // Cleanup when window closes
+        const observer = new MutationObserver((mutations) => {
+            if(!document.body.contains(container)) {
+                clearInterval(gameLoop);
+                document.removeEventListener('keydown', keyHandler);
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.getElementById('windows-container'), {childList: true, subtree: true});
+
+        goScreen.addEventListener('restart', startGame);
+        
+        ctx.fillStyle = '#001100'; ctx.fillRect(0,0,canvas.width, canvas.height);
+        ctx.fillStyle = '#0f0'; ctx.font = "20px Courier New"; ctx.textAlign = "center";
+        ctx.fillText("Press Arrow Key to Start", canvas.width/2, canvas.height/2);
+        
+        document.addEventListener('keydown', function starter(e){
+             if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) && document.getElementById(winId).style.zIndex == zIndexCounter && !running) {
+                 document.removeEventListener('keydown', starter);
+                 startGame();
+             }
+        });
+    }
+
+    // 7. BROWSER (Mock)
+    function createBrowser(container, isMusicMode = false) {
+        if (isMusicMode) {
+            // Music Player Mode
+            container.innerHTML = `
+                <div style="display:flex; flex-direction:column; height:100%;">
+                    <div style="padding: 8px; background: #f0f0f0; border-bottom: 1px solid #ccc; display:flex; gap:10px; align-items: center;">
+                        <i class="fa-solid fa-music" style="color: #ff6b9d; margin-left: 5px;"></i>
+                        <input type="text" value="https://youtube.com/watch?v=nhR-IMZUcWk" style="flex:1; border-radius: 20px; border: 1px solid #ccc; padding: 4px 15px;" readonly>
+                        <i class="fa-brands fa-instagram" style="color: #E1306C; cursor: pointer; font-size: 18px; margin-right: 5px;" title="@afsal.tech" onclick="window.open('https://www.instagram.com/afsal.tech/', '_blank')"></i>
+                    </div>
+                    <div style="flex:1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; justify-content: center; align-items: center; flex-direction: column; padding: 40px 20px; color: white; text-align: center;">
+                        <div class="music-card" style="background: rgba(0,0,0,0.3); border-radius: 20px; padding: 60px 40px; backdrop-filter: blur(10px); max-width: 600px; width: 100%;">
+                            <i class="fa-solid fa-music" style="font-size: 80px; margin-bottom: 30px; opacity: 0.9;"></i>
+                            <h2 style="font-size: 32px; margin: 0 0 20px 0; font-weight: 600;">My Latest Track</h2>
+                            <p style="font-size: 16px; margin: 0 0 30px 0; opacity: 0.9; line-height: 1.6;">
+                                Check out my music on YouTube!<br>
+                                Click the button below to watch.
+                            </p>
+                            <a href="https://youtu.be/nhR-IMZUcWk" target="_blank" style="display: inline-block; padding: 15px 40px; background: #FF0000; color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 16px; transition: 0.3s; box-shadow: 0 4px 15px rgba(255,0,0,0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255,0,0,0.4)';" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 15px rgba(255,0,0,0.3)';">
+                                <i class="fa-brands fa-youtube" style="margin-right: 10px;"></i>
+                                Watch on YouTube
+                            </a>
+                            <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.2);">
+                                <p style="font-size: 14px; margin: 0 0 15px 0; opacity: 0.8;">Follow me on Instagram for more music</p>
+                                <a href="https://www.instagram.com/afsal.tech/" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 25px; background: rgba(225, 48, 108, 0.9); color: white; text-decoration: none; border-radius: 20px; font-size: 14px; transition: 0.3s;" onmouseover="this.style.background='rgba(225, 48, 108, 1)';" onmouseout="this.style.background='rgba(225, 48, 108, 0.9)';">
+                                    <i class="fa-brands fa-instagram"></i>
+                                    @afsal.tech
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Regular Browser Mode
+            container.innerHTML = `
+                <div style="display:flex; flex-direction:column; height:100%;">
+                    <div style="padding: 8px; background: #f0f0f0; border-bottom: 1px solid #ccc; display:flex; gap:10px;">
+                        <i class="fa-solid fa-arrow-left" style="color:#888;"></i>
+                        <i class="fa-solid fa-arrow-right" style="color:#888;"></i>
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <input type="text" value="https://www.afsalos.web/welcome" style="flex:1; border-radius: 20px; border: 1px solid #ccc; padding: 4px 15px;">
+                    </div>
+                    <div style="flex:1; background: white; padding: 40px; text-align: center; overflow-y: auto;">
+                        <h1 style="color: var(--accent-color);">Welcome to AfsalOS Browser</h1>
+                        <p>This is a simulated browser environment.</p>
+                        <div style="margin-top: 50px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; max-width: 800px; margin: 50px auto;">
+                            <div style="padding: 20px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;" class="hover-shadow">
+                                <i class="fa-brands fa-google" style="font-size: 30px; color: #DB4437;"></i><br>Search
+                            </div>
+                            <div style="padding: 20px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;" class="hover-shadow">
+                                <i class="fa-brands fa-youtube" style="font-size: 30px; color: #FF0000;"></i><br>Videos
+                            </div>
+                            <div style="padding: 20px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;" class="hover-shadow">
+                                <i class="fa-brands fa-github" style="font-size: 30px; color: #333;"></i><br>Code
+                            </div>
+                        </div>
+                        <p style="color: #888; margin-top: 50px;">(Note: Cannot load real websites due to iframe restrictions in a single file environment)</p>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    // 7.5 MUSIC PLAYER (Windows Media Player Style)
+    function createMusicPlayer(container) {
+        const playerId = 'wmp-' + Date.now();
+        container.innerHTML = `
+            <div class="wmp-container">
+                <div class="wmp-navbar">
+                    <button class="wmp-nav-btn">◀</button>
+                    <button class="wmp-nav-btn">▶</button>
+                    <button class="wmp-nav-tab active">Now Playing ▼</button>
+                    <button class="wmp-nav-tab">Library</button>
+                    <button class="wmp-nav-tab">Rip</button>
+                    <button class="wmp-nav-tab">Burn</button>
+                    <button class="wmp-nav-tab">Sync</button>
+                </div>
+                <div class="wmp-main-area">
+                    <div class="wmp-display-area">
+                        <canvas class="wmp-visualizer" id="${playerId}-viz"></canvas>
+                        <div style="position: absolute; color: #fff; text-align: center; z-index: 1;">
+                            <i class="fa-solid fa-music" style="font-size: 64px; opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <div class="wmp-playlist-sidebar">
+                        <div class="wmp-playlist-header">
+                            <span>Now Playing</span>
+                            <button style="background: none; border: none; cursor: pointer; font-size: 14px;">✕</button>
+                        </div>
+                        <div class="wmp-playlist-list">
+                            <div class="wmp-playlist-item active">Unna Nanachida</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="wmp-controls">
+                    <div class="wmp-progress-bar" id="${playerId}-progress">
+                        <div class="wmp-progress-filled" id="${playerId}-progress-filled"></div>
+                    </div>
+                    <div class="wmp-controls-row">
+                        <button class="wmp-control-btn" id="${playerId}-shuffle" title="Shuffle">
+                            <i class="fa-solid fa-shuffle"></i>
+                        </button>
+                        <button class="wmp-control-btn" id="${playerId}-repeat" title="Repeat">
+                            <i class="fa-solid fa-repeat"></i>
+                        </button>
+                        <button class="wmp-control-btn" id="${playerId}-stop" title="Stop">
+                            <i class="fa-solid fa-stop"></i>
+                        </button>
+                        <button class="wmp-control-btn" id="${playerId}-prev" title="Previous">
+                            <i class="fa-solid fa-backward-step"></i>
+                        </button>
+                        <button class="wmp-control-btn play" id="${playerId}-play" title="Play">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button class="wmp-control-btn" id="${playerId}-next" title="Next">
+                            <i class="fa-solid fa-forward-step"></i>
+                        </button>
+                        <div class="wmp-track-info">
+                            <div class="wmp-track-name" id="${playerId}-track-name">Unna Nanachida</div>
+                            <div id="${playerId}-time">0:00 / 0:00</div>
+                        </div>
+                        <a href="https://youtu.be/nhR-IMZUcWk" target="_blank" class="wmp-youtube-link">
+                            <i class="fa-brands fa-youtube"></i> Watch on YouTube
+                        </a>
+                        <div class="wmp-volume-control">
+                            <i class="fa-solid fa-volume-high"></i>
+                            <div class="wmp-volume-slider" id="${playerId}-volume">
+                                <div class="wmp-volume-filled" id="${playerId}-volume-filled"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <audio id="${playerId}-audio" preload="metadata">
+                    <source src="public/Unna Nanachida.mp3" type="audio/mpeg">
+                </audio>
+            </div>
+        `;
+
+        const audio = container.querySelector(`#${playerId}-audio`);
+        const playBtn = container.querySelector(`#${playerId}-play`);
+        const stopBtn = container.querySelector(`#${playerId}-stop`);
+        const progressBar = container.querySelector(`#${playerId}-progress`);
+        const progressFilled = container.querySelector(`#${playerId}-progress-filled`);
+        const timeDisplay = container.querySelector(`#${playerId}-time`);
+        const trackName = container.querySelector(`#${playerId}-track-name`);
+        const volumeSlider = container.querySelector(`#${playerId}-volume`);
+        const volumeFilled = container.querySelector(`#${playerId}-volume-filled`);
+        const vizCanvas = container.querySelector(`#${playerId}-viz`);
+        const shuffleBtn = container.querySelector(`#${playerId}-shuffle`);
+        const repeatBtn = container.querySelector(`#${playerId}-repeat`);
+
+        // Setup canvas
+        vizCanvas.width = vizCanvas.offsetWidth;
+        vizCanvas.height = vizCanvas.offsetHeight;
+        const ctx = vizCanvas.getContext('2d');
+
+        let isPlaying = false;
+        let isShuffled = false;
+        let isRepeating = false;
+        let visualizerInterval;
+        let isClosing = false;
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress() {
+            if (audio.duration && isFinite(audio.duration)) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progressFilled.style.width = percent + '%';
+                timeDisplay.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+            }
+        }
+
+        function drawVisualizer() {
+            if (!isPlaying) {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, vizCanvas.width, vizCanvas.height);
+                return;
+            }
+
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, vizCanvas.width, vizCanvas.height);
+            
+            // Simple animated visualizer
+            const barCount = 40;
+            const barWidth = vizCanvas.width / barCount;
+            const time = Date.now() * 0.002;
+            
+            for (let i = 0; i < barCount; i++) {
+                const height = (Math.sin(time + i * 0.3) * 0.5 + 0.5) * vizCanvas.height * 0.6;
+                const hue = (i / barCount) * 360;
+                ctx.fillStyle = `hsl(${hue}, 70%, 50%)`;
+                ctx.fillRect(i * barWidth, vizCanvas.height - height, barWidth - 2, height);
+            }
+        }
+
+        function startVisualizer() {
+            if (visualizerInterval) clearInterval(visualizerInterval);
+            visualizerInterval = setInterval(drawVisualizer, 50);
+        }
+
+        function stopVisualizer() {
+            if (visualizerInterval) {
+                clearInterval(visualizerInterval);
+                visualizerInterval = null;
+            }
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, vizCanvas.width, vizCanvas.height);
+        }
+
+        // Play/Pause button
+        playBtn.addEventListener('click', async () => {
+            try {
+                if (audio.paused) {
+                    // Ensure audio is loaded
+                    if (audio.readyState === 0) {
+                        audio.load();
+                    }
+                    
+                    try {
+                        await audio.play();
+                        isPlaying = true;
+                        playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                        playBtn.title = 'Pause';
+                        startVisualizer();
+                    } catch (playError) {
+                        console.error('Play error:', playError);
+                        alert('Unable to play audio. Make sure "public/Unna Nanachida.mp3" is in the correct location.');
+                    }
+                } else {
+                    audio.pause();
+                    isPlaying = false;
+                    playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                    playBtn.title = 'Play';
+                    stopVisualizer();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Stop button
+        stopBtn.addEventListener('click', () => {
+            audio.pause();
+            audio.currentTime = 0;
+            isPlaying = false;
+            playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            playBtn.title = 'Play';
+            stopVisualizer();
+            updateProgress();
+        });
+
+        // Progress bar seeking
+        progressBar.addEventListener('click', (e) => {
+            if (audio.duration) {
+                const rect = progressBar.getBoundingClientRect();
+                const percent = (e.clientX - rect.left) / rect.width;
+                audio.currentTime = percent * audio.duration;
+                updateProgress();
+            }
+        });
+
+        // Volume control
+        volumeSlider.addEventListener('click', (e) => {
+            const rect = volumeSlider.getBoundingClientRect();
+            const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            audio.volume = percent;
+            volumeFilled.style.width = (percent * 100) + '%';
+        });
+
+        // Shuffle button
+        shuffleBtn.addEventListener('click', () => {
+            isShuffled = !isShuffled;
+            shuffleBtn.style.opacity = isShuffled ? '1' : '0.5';
+        });
+
+        // Repeat button
+        repeatBtn.addEventListener('click', () => {
+            isRepeating = !isRepeating;
+            repeatBtn.style.opacity = isRepeating ? '1' : '0.5';
+        });
+
+        // Audio event listeners
+        audio.addEventListener('loadedmetadata', () => {
+            updateProgress();
+            trackName.textContent = 'Unna Nanachida';
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            updateProgress();
+        });
+
+        audio.addEventListener('ended', () => {
+            if (isRepeating) {
+                audio.currentTime = 0;
+                audio.play().catch(e => console.error('Error replaying:', e));
+            } else {
+                isPlaying = false;
+                playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                playBtn.title = 'Play';
+                stopVisualizer();
+            }
+        });
+
+        audio.addEventListener('play', () => {
+            isPlaying = true;
+            playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            playBtn.title = 'Pause';
+            startVisualizer();
+        });
+
+        audio.addEventListener('pause', () => {
+            isPlaying = false;
+            playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            playBtn.title = 'Play';
+            stopVisualizer();
+        });
+
+        const errorHandler = (e) => {
+            // Don't show error if window is being closed
+            if (isClosing) return;
+            
+            console.error('Audio error:', e);
+            console.error('Audio error details:', {
+                code: audio.error?.code,
+                message: audio.error?.message,
+                networkState: audio.networkState,
+                readyState: audio.readyState,
+                src: audio.src || audio.currentSrc
+            });
+            
+            let errorMsg = 'Unable to load audio file. ';
+            if (audio.error) {
+                switch(audio.error.code) {
+                    case 1: errorMsg += 'Media aborted.'; break;
+                    case 2: errorMsg += 'Network error - file not found.'; break;
+                    case 3: errorMsg += 'Decode error - file format may not be supported.'; break;
+                    case 4: errorMsg += 'Source not supported.'; break;
+                }
+            }
+            errorMsg += '\n\nMake sure "public/Unna Nanachida.mp3" is in the correct location.';
+            alert(errorMsg);
+        };
+        
+        audio.addEventListener('error', errorHandler);
+
+        // Initialize
+        audio.volume = 0.7;
+        volumeFilled.style.width = '70%';
+        drawVisualizer();
+
+        // Cleanup
+        const observer = new MutationObserver(() => {
+            if (!document.body.contains(container)) {
+                isClosing = true;
+                audio.pause();
+                // Remove error listener to prevent alerts during cleanup
+                audio.removeEventListener('error', errorHandler);
+                // Clear audio source without triggering error
+                audio.src = '';
+                stopVisualizer();
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.getElementById('windows-container'), { childList: true, subtree: true });
+    }
+
+    // 8. CALCULATOR
+    function createCalculator(container) {
+        container.style.background = '#f9f9f9';
+        container.innerHTML = `
+            <div style="padding: 15px; height: 100%; display: flex; flex-direction: column;">
+                <div id="calc-display" style="font-size: 40px; text-align: right; margin-bottom: 10px; font-weight: 300; overflow:hidden;">0</div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; flex: 1;">
+                    <button class="calc-btn op">C</button><button class="calc-btn op">/</button><button class="calc-btn op">*</button><button class="calc-btn op" style="color:red">DEL</button>
+                    <button class="calc-btn">7</button><button class="calc-btn">8</button><button class="calc-btn">9</button><button class="calc-btn op">-</button>
+                    <button class="calc-btn">4</button><button class="calc-btn">5</button><button class="calc-btn">6</button><button class="calc-btn op">+</button>
+                    <button class="calc-btn">1</button><button class="calc-btn">2</button><button class="calc-btn">3</button><button class="calc-btn eq" style="grid-row: span 2; background: var(--accent-color); color: white;">=</button>
+                    <button class="calc-btn" style="grid-column: span 2;">0</button><button class="calc-btn">.</button>
+                </div>
+            </div>
+            <style>
+                .calc-btn { border: 1px solid #eee; background: white; font-size: 18px; border-radius: 4px; cursor: pointer; transition:0.1s; }
+                .calc-btn:hover { background: #eee; }
+                .calc-btn.op { background: #f0f0f0; }
+                .calc-btn:active { transform: scale(0.95); }
+            </style>
+        `;
+
+        const display = container.querySelector('#calc-display');
+        let currentExpr = '';
+
+        container.querySelectorAll('.calc-btn').forEach(btn => {
+            btn.onclick = () => {
+                const val = btn.innerText;
+                if(val === 'C') currentExpr = '';
+                else if(val === 'DEL') currentExpr = currentExpr.slice(0, -1);
+                else if(val === '=') {
+                    try { currentExpr = String(eval(currentExpr)); } catch { currentExpr = 'Error'; }
+                }
+                else currentExpr += val;
+                display.innerText = currentExpr || '0';
+            }
+        });
+    }
+
+    // 9. VIDEO EDITOR (Simulation via Canvas)
+    function createVideoEditor(container, fp, winId) {
+        container.innerHTML = `
+            <div class="vid-container">
+                <div class="app-menu" style="background: #333; border-color: #444;">
+                    <div class="menu-item">Import Media</div>
+                    <div class="menu-item">Export</div>
+                </div>
+                <div class="vid-preview">
+                    <canvas id="vid-canvas" width="640" height="360"></canvas>
+                    <div style="position: absolute; bottom: 10px; right: 10px;" class="vid-filters">
+                        <button class="filter-btn" data-f="none">Normal</button>
+                        <button class="filter-btn" data-f="grayscale(1)">B&W</button>
+                        <button class="filter-btn" data-f="sepia(1)">Sepia</button>
+                        <button class="filter-btn" data-f="hue-rotate(90deg)">Alien</button>
+                    </div>
+                </div>
+                <div class="vid-controls">
+                    <i class="fa-solid fa-backward-step" style="cursor: pointer;"></i>
+                    <i class="fa-solid fa-play" id="vid-play" style="cursor: pointer; font-size: 20px;"></i>
+                    <i class="fa-solid fa-forward-step" style="cursor: pointer;"></i>
+                </div>
+                <div class="vid-timeline">
+                    <div style="font-size: 10px; color: #aaa; display:flex; justify-content:space-between;"><span>00:00</span><span>00:10</span></div>
+                    <div style="background: #333; height: 30px; position:relative; border-radius: 4px;">
+                        <div class="trk"></div>
+                        <div class="playhead" id="p-head"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const canvas = container.querySelector('#vid-canvas');
+        const ctx = canvas.getContext('2d');
+        const playBtn = container.querySelector('#vid-play');
+        const playhead = container.querySelector('#p-head');
+        
+        let isPlaying = false;
+        let progress = 0; // 0 to 100
+        let animFrame;
+        let filter = 'none';
+
+        // Procedural animation for "video" content
+        function drawFrame(time) {
+            ctx.filter = filter;
+            ctx.fillStyle = '#111';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Animated abstract shapes
+            const t = time * 0.002;
+            ctx.fillStyle = `hsl(${t * 50}, 70%, 50%)`;
+            ctx.beginPath();
+            ctx.arc(320 + Math.sin(t) * 100, 180 + Math.cos(t * 1.5) * 50, 50, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = `hsl(${(t * 50) + 180}, 70%, 50%)`;
+            ctx.fillRect(100 + Math.cos(t)*50, 100 + Math.sin(t)*50, 80, 80);
+            
+            ctx.fillStyle = "white";
+            ctx.font = "20px Arial";
+            ctx.fillText("Simulated Video Output", 20, 30);
+
+            ctx.filter = 'none';
+        }
+
+        function loop(timestamp) {
+            if(!isPlaying) return;
+            drawFrame(timestamp);
+            progress = (progress + 0.2) % 100;
+            playhead.style.left = progress + '%';
+            animFrame = requestAnimationFrame(loop);
+        }
+
+        playBtn.onclick = () => {
+            isPlaying = !isPlaying;
+            playBtn.className = isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+            if(isPlaying) animFrame = requestAnimationFrame(loop);
+            else cancelAnimationFrame(animFrame);
+        };
+
+        container.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.onclick = () => { filter = btn.getAttribute('data-f'); if(!isPlaying) drawFrame(performance.now()); }
+        });
+
+        drawFrame(0); // Initial frame
+
+        // Cleanup
+        const observer = new MutationObserver(() => {
+            if(!document.body.contains(container)) { cancelAnimationFrame(animFrame); observer.disconnect(); }
+        });
+        observer.observe(document.getElementById('windows-container'), {childList: true, subtree: true});
+    }
+
+    // 10. AI PROJECT VIEWER
+    function createAIProject(container, filePath) {
+        let projectData = null;
+        
+        // Get project data from VFS
+        if(filePath) {
+            const fileObj = VFS.Resolve(filePath);
+            if(fileObj && fileObj.ext === 'aiproject') {
+                projectData = fileObj;
+            }
+        }
+
+        // Default project data if not found
+        if(!projectData) {
+            projectData = {
+                title: 'AI Project',
+                description: 'An AI-powered project demonstration.',
+                                videoPath: 'public/AI Padel Coach.mp4'
+            };
+        }
+
+        container.innerHTML = `
+            <div style="display: flex; flex-direction: column; height: 100%; background: var(--window-bg); overflow: hidden;">
+                <!-- Header Section -->
+                <div style="padding: 30px 40px; background: linear-gradient(135deg, rgba(255, 107, 157, 0.1) 0%, rgba(0, 162, 237, 0.1) 100%); border-bottom: 1px solid var(--border-color);">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #ff6b9d 0%, #00a2ed 100%); border-radius: 12px; display: flex; justify-content: center; align-items: center;">
+                            <i class="fa-solid fa-robot" style="font-size: 28px; color: white;"></i>
+                        </div>
+                        <div>
+                            <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: var(--text-color);">${projectData.title || 'AI Project'}</h1>
+                            <p style="margin: 5px 0 0 0; font-size: 14px; color: #888;">AI-Powered Application</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div style="flex: 1; overflow-y: auto; padding: 30px 40px;">
+                    <!-- Introduction Section -->
+                    <div style="margin-bottom: 30px;">
+                        <h2 style="font-size: 20px; font-weight: 600; margin: 0 0 15px 0; color: var(--text-color); display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-info-circle" style="color: var(--accent-color);"></i>
+                            About This Project
+                        </h2>
+                        <p style="font-size: 16px; line-height: 1.7; color: var(--text-color); margin: 0; padding: 20px; background: rgba(128,128,128,0.05); border-radius: 8px; border-left: 4px solid var(--accent-color);">
+                            ${projectData.description || 'This is an AI-powered project that demonstrates advanced capabilities.'}
+                        </p>
+                    </div>
+
+                    <!-- Video Demo Section -->
+                    <div>
+                        <h2 style="font-size: 20px; font-weight: 600; margin: 0 0 15px 0; color: var(--text-color); display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-play-circle" style="color: var(--accent-color);"></i>
+                            Demo Video
+                        </h2>
+                        <div style="background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.2); position: relative; padding-top: 56.25%;">
+                            <video 
+                                id="ai-project-video" 
+                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;"
+                                controls
+                                preload="metadata"
+                                poster=""
+                            >
+                                <source src="${projectData.videoPath || 'public/AI Padel Coach.mp4'}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            <div id="video-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                                <div class="spinner" style="border-color: rgba(255,255,255,0.3); border-left-color: white;"></div>
+                                <span>Loading video...</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: #888; margin-top: 10px; text-align: center;">
+                            Click play to watch the demonstration
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Handle video loading
+        const video = container.querySelector('#ai-project-video');
+        const loadingIndicator = container.querySelector('#video-loading');
+
+        if(video) {
+            video.addEventListener('loadeddata', () => {
+                if(loadingIndicator) loadingIndicator.style.display = 'none';
+            });
+
+            video.addEventListener('error', (e) => {
+                if(loadingIndicator) {
+                    loadingIndicator.innerHTML = `
+                        <i class="fa-solid fa-exclamation-triangle" style="font-size: 32px; color: #ff6b6b;"></i>
+                        <span>Video file not found</span>
+                        <p style="font-size: 12px; margin-top: 5px; opacity: 0.8;">Make sure "${projectData.videoPath || 'public/AI Padel Coach.mp4'}" is in the correct location</p>
+                    `;
+                }
+                console.error('Video loading error:', e);
+            });
+
+            // Show loading initially
+            video.addEventListener('loadstart', () => {
+                if(loadingIndicator) loadingIndicator.style.display = 'flex';
+            });
+        }
+    }
+
+
+    /* --- UI/UX & EVENTS --- */
+
+    // Initialize Desktop Icons
+    function initDesktop() {
+        const dc = document.getElementById('desktop-icons');
+        const isMobile = window.innerWidth <= 768;
+        
+        // Helper function to handle icon clicks (works for both desktop and mobile)
+        const handleIconClick = (action, el) => {
+            if(isMobile) {
+                // On mobile, single tap opens directly (more intuitive)
+                action();
+            } else {
+                // Desktop: select on single click
+                selectIcon(el);
+            }
+        };
+        
+        // Define desktop icon order: About Me, then AI Experiments folder, then apps, then files
+        // Step 1: Add About Me
+        if(AppRegistry['about-me']) {
+            const icon = document.createElement('div');
+            icon.className = 'd-icon';
+            icon.setAttribute('data-app', 'about-me');
+            icon.innerHTML = `<i class="${AppRegistry['about-me'].icon}" style="color: ${AppRegistry['about-me'].color}"></i><span>${AppRegistry['about-me'].title}</span>`;
+            icon.addEventListener('click', () => handleIconClick(() => WindowManager.open('about-me'), icon));
+            icon.addEventListener('dblclick', () => WindowManager.open('about-me'));
+            dc.appendChild(icon);
+        }
+        
+        // Step 2: Add AI Experiments folder (from VFS)
+        const dtFiles = VFS.root.children['Desktop'].children;
+        if(dtFiles['AI Experiments']) {
+            const icon = document.createElement('div');
+            icon.className = 'd-icon';
+            icon.innerHTML = `<i class="fa-solid fa-folder" style="color: #ffd66b; text-shadow: 0 2px 5px rgba(0,0,0,0.5);"></i><span>AI Experiments</span>`;
+            icon.addEventListener('click', () => handleIconClick(() => WindowManager.open('file-explorer', 'Desktop/AI Experiments'), icon));
+            icon.addEventListener('dblclick', () => WindowManager.open('file-explorer', 'Desktop/AI Experiments'));
+            dc.appendChild(icon);
+        }
+        
+        // Step 3: Add My Music and Terminal apps
+        const desktopApps = ['my-music', 'terminal'];
+        for(let key of desktopApps) {
+            if(AppRegistry[key]) {
+                const icon = document.createElement('div');
+                icon.className = 'd-icon';
+                icon.setAttribute('data-app', key);
+                icon.innerHTML = `<i class="${AppRegistry[key].icon}" style="color: ${AppRegistry[key].color}"></i><span>${AppRegistry[key].title}</span>`;
+                icon.addEventListener('click', () => handleIconClick(() => WindowManager.open(key), icon));
+                icon.addEventListener('dblclick', () => WindowManager.open(key));
+                dc.appendChild(icon);
+            }
+        }
+        
+        // Step 4: Add files from VFS Desktop in specific order
+        const fileOrder = ['Getting Started.txt', 'Get in Touch.txt'];
+        for(let fName of fileOrder) {
+            if(dtFiles[fName]) {
+                const icon = document.createElement('div');
+                icon.className = 'd-icon';
+                icon.innerHTML = `<i class="fa-solid fa-file-lines" style="color: white; text-shadow: 0 2px 5px rgba(0,0,0,0.5);"></i><span>${fName}</span>`;
+                icon.addEventListener('click', () => handleIconClick(() => WindowManager.open('notepad', `Desktop/${fName}`), icon));
+                icon.addEventListener('dblclick', () => WindowManager.open('notepad', `Desktop/${fName}`));
+                dc.appendChild(icon);
+            }
+        }
+    }
+
+    function selectIcon(el) {
+        document.querySelectorAll('.d-icon').forEach(i => i.classList.remove('selected'));
+        el.classList.add('selected');
+    }
+    document.getElementById('desktop').addEventListener('click', (e) => {
+        if(e.target.id === 'desktop' || e.target.id === 'desktop-icons') {
+            document.querySelectorAll('.d-icon').forEach(i => i.classList.remove('selected'));
+        }
+    });
+
+    // Start Menu
+    function initStartMenu() {
+        const sm = document.getElementById('start-apps');
+        
+        // Add AI Experiments folder
+        sm.innerHTML += `
+            <div class="app-item" onclick="WindowManager.open('file-explorer', 'Desktop/AI Experiments'); toggleStartMenu();">
+                <div style="width:40px; height:40px; background:#ffd66b; border-radius:8px; display:flex; justify-content:center; align-items:center;">
+                    <i class="fa-solid fa-folder" style="color:white; font-size:20px;"></i>
+                </div>
+                <span>AI Experiments</span>
+            </div>`;
+        
+        // Add Calculator, Terminal, Paint, Snake Game, and Music Player
+        const startMenuApps = ['calculator', 'terminal', 'paint', 'game', 'my-music'];
+        for(let key of startMenuApps) {
+            if(AppRegistry[key]) {
+                const app = AppRegistry[key];
+                sm.innerHTML += `
+                    <div class="app-item" onclick="WindowManager.open('${key}'); toggleStartMenu();">
+                        <div style="width:40px; height:40px; background:${app.color}; border-radius:8px; display:flex; justify-content:center; align-items:center;">
+                            <i class="${app.icon}" style="color:white; font-size:20px;"></i>
+                        </div>
+                        <span>${app.title}</span>
+                    </div>`;
+            }
+        }
+    }
+
+    const startBtn = document.getElementById('start-btn');
+    const startMenu = document.getElementById('start-menu');
+    
+    function toggleStartMenu() {
+        startMenu.classList.toggle('open');
+        startBtn.classList.toggle('active');
+    }
+
+    startBtn.onclick = (e) => { e.stopPropagation(); toggleStartMenu(); };
+    startMenu.onclick = (e) => e.stopPropagation();
+    document.addEventListener('click', () => {
+        if(startMenu.classList.contains('open')) toggleStartMenu();
+        document.getElementById('context-menu').style.display = 'none';
+    });
+
+    // Clock
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('time').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        document.getElementById('date').innerText = now.toLocaleDateString();
+    }
+    setInterval(updateClock, 1000); updateClock();
+
+    // Context Menu
+    const ctxMenu = document.getElementById('context-menu');
+    document.getElementById('desktop').addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if(e.target.closest('.window') || e.target.closest('#taskbar')) return;
+        
+        ctxMenu.style.display = 'block';
+        ctxMenu.style.left = e.clientX + 'px';
+        ctxMenu.style.top = e.clientY + 'px';
+        
+        ctxMenu.innerHTML = `
+            <div class="ctx-item"><i class="fa-solid fa-eye width:20px;"></i> View</div>
+            <div class="ctx-item"><i class="fa-solid fa-arrow-down-a-z width:20px;"></i> Sort by</div>
+            <div class="ctx-item" onclick="location.reload()"><i class="fa-solid fa-rotate-right width:20px;"></i> Refresh</div>
+            <div class="ctx-hr"></div>
+            <div class="ctx-item" onclick="WindowManager.open('notepad')"><i class="fa-solid fa-file-circle-plus width:20px;"></i> New Text Document</div>
+            <div class="ctx-hr"></div>
+            <div class="ctx-item"><i class="fa-solid fa-display width:20px;"></i> Display settings</div>
+            <div class="ctx-item" onclick="changeWallpaper()"><i class="fa-solid fa-wand-magic-sparkles width:20px;"></i> Personalize</div>
+        `;
+    });
+
+    const wallpapers = [
+        'public/wallpaper.jpg', // Windows XP Bliss (local)
+        'https://wallpaperaccess.com/full/1567835.jpg', // Windows XP Bliss (online backup)
+        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop', // Abstract fluid
+        'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?auto=format&fit=crop&w=1920&q=80', // Mountains
+        'https://images.unsplash.com/photo-1536431311719-398b670a94f8?auto=format&fit=crop&w=1920&q=80', // Cyberpunk city
+        '#0078d7' // Solid windows blue
+    ];
+    let wpIndex = 0;
+    function changeWallpaper() {
+        wpIndex = (wpIndex + 1) % wallpapers.length;
+        let bg = wallpapers[wpIndex].startsWith('#') ? wallpapers[wpIndex] : `url('${wallpapers[wpIndex]}')`;
+        document.documentElement.style.setProperty('--Wallpaper', bg);
+    }
+
+    // Parallax effect on wallpaper (desktop only)
+    if (window.innerWidth > 768) {
+        document.addEventListener('mousemove', (e) => {
+            const x = (window.innerWidth - e.clientX) / 50;
+            const y = (window.innerHeight - e.clientY) / 50;
+            document.getElementById('desktop').style.transform = `translate(${x}px, ${y}px) scale(1.02)`;
+        });
+    }
+
+    // BSOD Easter Egg
+    function triggerBSOD() {
+        document.getElementById('bsod').style.display = 'flex';
+        setTimeout(() => location.reload(), 5000);
+    }
+
+    // Boot Sequence
+    window.onload = () => {
+        initDesktop();
+        initStartMenu();
+        setTimeout(() => {
+            document.getElementById('boot-text').innerText = "Loading your experience...";
+        }, 1500);
+        setTimeout(() => {
+            const bs = document.getElementById('boot-screen');
+            bs.style.opacity = '0';
+            setTimeout(() => bs.remove(), 1000);
+            
+            // Auto open About Me app and Getting Started guide with proper positioning
+            setTimeout(() => {
+                const isMobile = window.innerWidth <= 768;
+                
+                // Open About Me on the left
+                const aboutMeId = WindowManager.open('about-me');
+                
+                // Only open notepad on desktop, not on mobile (to avoid clutter)
+                if (!isMobile) {
+                    setTimeout(() => {
+                        const notepadId = WindowManager.open('notepad', 'Desktop/Getting Started.txt');
+                        // Position the notepad to the right of About Me
+                        if (notepadId && activeWindows[notepadId]) {
+                            const notepadWin = activeWindows[notepadId].element;
+                            notepadWin.style.left = '870px'; // Position to the right
+                            notepadWin.style.top = '50px';   // Same top position as About Me
+                            notepadWin.style.width = '500px'; // Smaller width for notepad
+                        }
+                    }, 400);
+                }
+            }, 800);
+        }, 3500);
+    };
+
+    // Handle requirejs for Monaco if it fails to load from CDN
+    window.onerror = function() {
+        if(typeof require === 'undefined') console.warn("Monaco editor loader failed. Code editor will not function.");
+    }
+
+</script>
+</body>
+</html>
