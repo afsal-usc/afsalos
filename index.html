@@ -366,6 +366,19 @@
         }
         .window.minimized { display: none; }
         
+        /* About Me window - not full screen on mobile */
+        .window[data-app="about-me"] {
+            width: 90% !important;
+            max-width: 500px !important;
+            height: auto !important;
+            max-height: 85vh !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            border-radius: 12px !important;
+            overflow-y: auto !important;
+        }
+        
         /* Desktop icons - horizontal scroll */
         #desktop-icons { 
             flex-direction: row; 
@@ -611,6 +624,7 @@
             const win = document.createElement('div');
             win.className = 'window';
             win.id = id;
+            win.setAttribute('data-app', appId); // Add data attribute for app identification
             win.style.zIndex = zIndexCounter;
             win.style.left = (50 + (Object.keys(activeWindows).length * 50)) + 'px';
             win.style.top = (50 + (Object.keys(activeWindows).length * 50)) + 'px';
@@ -669,7 +683,12 @@
         },
 
         maximize: function(id) {
-            activeWindows[id].element.classList.toggle('maximized');
+            const win = activeWindows[id].element;
+            // Don't maximize About Me window on mobile
+            if (window.innerWidth <= 768 && win.getAttribute('data-app') === 'about-me') {
+                return;
+            }
+            win.classList.toggle('maximized');
         },
 
         focus: function(id) {
