@@ -1,0 +1,11 @@
+{
+  "name": "afsalos",
+  "version": "1.0.0",
+  "description": "Interactive portfolio website",
+  "scripts": {
+    "build": "echo 'No build step required'"
+  },
+  "keywords": ["portfolio", "interactive"],
+  "author": "",
+  "license": "MIT"
+}
