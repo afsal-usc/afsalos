@@ -463,17 +463,141 @@
         /* My Experience mobile */
         .window[data-app="my-experience"] > div > div:first-child {
             flex-direction: column !important;
+            height: 100% !important;
+            display: flex !important;
         }
-        .window[data-app="my-experience"] > div > div:first-child > div:last-child {
+        /* Target the top section (parent of image + description) - make it column layout */
+        .window[data-app="my-experience"] > div > div:first-child > div:first-child {
+            flex-direction: column !important;
+            overflow: visible !important;
+            min-height: auto !important;
+            flex: 1 !important;
+        }
+        /* Reorder for mobile: Description first, then Image, then Filmstrip */
+        .window[data-app="my-experience"] .exp-description-panel {
+            order: 1 !important;
             width: 100% !important;
-            max-height: 40vh !important;
+            height: auto !important;
+            min-height: auto !important;
+            max-height: 25vh !important;
+            padding: 10px 12px !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-bottom: 2px solid #ccc !important;
+            flex: none !important;
+            overflow-y: auto !important;
+        }
+        .window[data-app="my-experience"] .exp-image-container {
+            order: 2 !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 150px !important;
+            max-height: none !important;
+            padding: 15px !important;
+            border-right: none !important;
+            border-bottom: 2px solid #ccc !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #f0f0f0 !important;
+            overflow: auto !important;
+            flex: 1 !important;
+            flex-shrink: 1 !important;
+        }
+        .window[data-app="my-experience"] .exp-main-image {
+            max-width: 100% !important;
+            max-height: 100% !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 100px !important;
+            min-height: 100px !important;
+            object-fit: contain !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background: transparent !important;
+        }
+        .window[data-app="my-experience"] .exp-image-container img {
+            max-width: 100% !important;
+            max-height: 100% !important;
+        }
+        .window[data-app="my-experience"] .exp-title {
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            margin-bottom: 5px !important;
+            line-height: 1.4 !important;
+        }
+        .window[data-app="my-experience"] .exp-institution {
+            font-size: 10px !important;
+            margin-bottom: 8px !important;
+            opacity: 0.95 !important;
+            line-height: 1.5 !important;
+        }
+        .window[data-app="my-experience"] .exp-label {
+            font-size: 8px !important;
+            margin-bottom: 5px !important;
+            letter-spacing: 0.5px !important;
+        }
+        .window[data-app="my-experience"] .exp-description {
+            font-size: 10px !important;
+            line-height: 1.6 !important;
+            margin: 0 !important;
+        }
+        .window[data-app="my-experience"] .exp-date {
+            font-size: 9px !important;
+        }
+        .window[data-app="my-experience"] .exp-header-section {
+            margin-bottom: 10px !important;
+        }
+        .window[data-app="my-experience"] .exp-content-section {
+            margin-bottom: 8px !important;
+        }
+        .window[data-app="my-experience"] .exp-date-section {
+            margin-bottom: 0 !important;
+        }
+        .window[data-app="my-experience"] .exp-description-panel {
+            padding: 10px 12px !important;
         }
         .window[data-app="my-experience"] .thumbnail-filmstrip {
-            height: 100px !important;
+            height: 110px !important;
+            flex-shrink: 0 !important;
         }
         .window[data-app="my-experience"] .thumbnail-filmstrip > div {
-            min-width: 60px !important;
-            height: 60px !important;
+            min-width: 80px !important;
+            height: 80px !important;
+        }
+        .window[data-app="my-experience"] > div > div:first-child > div:last-child {
+            height: auto !important;
+            flex-shrink: 0 !important;
+        }
+        .window[data-app="my-experience"] .title-bar {
+            padding: 0 8px !important;
+            height: 32px !important;
+            align-items: center !important;
+        }
+        .window[data-app="my-experience"] .title-bar-text {
+            font-size: 11px !important;
+            gap: 6px !important;
+            align-items: center !important;
+            display: flex !important;
+            line-height: 1 !important;
+        }
+        .window[data-app="my-experience"] .title-bar-text i {
+            font-size: 13px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .window[data-app="my-experience"] > div > div:first-child > div:last-child > div:first-child {
+            padding: 6px 10px !important;
+            font-size: 10px !important;
+        }
+        .window[data-app="my-experience"] > div > div:first-child > div:last-child > div:first-child button {
+            padding: 5px 8px !important;
+            font-size: 10px !important;
+        }
+        .window[data-app="my-experience"] > div > div:first-child > div:last-child > div:first-child > div:last-child {
+            font-size: 9px !important;
         }
         
         /* Notepad mobile */
@@ -2102,26 +2226,26 @@ Type 'python' to switch to Python mode
                 <!-- Top Section: Main Image + Description -->
                 <div style="display: flex; flex: 1; overflow: hidden; min-height: 0;">
                     <!-- Main Image Area -->
-                    <div style="flex: 1; display: flex; align-items: center; justify-content: center; background: #fff; border-right: 1px solid #ccc; padding: 20px; overflow: auto;">
-                        <img id="${expId}-main-image" src="${experiences[0]?.image || ''}" alt="Experience" style="max-width: 100%; max-height: 100%; object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    <div class="exp-image-container" style="flex: 1; display: flex; align-items: center; justify-content: center; background: #fff; border-right: 1px solid #ccc; padding: 20px; overflow: auto;">
+                        <img id="${expId}-main-image" src="${experiences[0]?.image || ''}" alt="Experience" class="exp-main-image" style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
                     </div>
                     
                     <!-- Description Panel (Windows XP Style) -->
-                    <div style="width: 280px; background: linear-gradient(to bottom, #316ac5 0%, #2458a8 100%); color: white; padding: 20px; overflow-y: auto; border-left: 1px solid #1a4a8a;">
-                        <div style="margin-bottom: 20px;">
-                            <h2 id="${expId}-title" style="font-size: 18px; font-weight: 600; margin: 0 0 10px 0; color: white;">${experiences[0]?.title || ''}</h2>
-                            <div id="${expId}-institution" style="font-size: 14px; opacity: 0.9; margin-bottom: 15px; color: #e8f4fd;">${experiences[0]?.institution || ''}</div>
+                    <div class="exp-description-panel" style="width: 280px; background: linear-gradient(to bottom, #316ac5 0%, #2458a8 100%); color: white; padding: 20px; overflow-y: auto; border-left: 1px solid #1a4a8a;">
+                        <div class="exp-header-section" style="margin-bottom: 20px;">
+                            <h2 id="${expId}-title" class="exp-title" style="font-size: 18px; font-weight: 600; margin: 0 0 10px 0; color: white;">${experiences[0]?.title || ''}</h2>
+                            <div id="${expId}-institution" class="exp-institution" style="font-size: 14px; opacity: 0.9; margin-bottom: 15px; color: #e8f4fd;">${experiences[0]?.institution || ''}</div>
                         </div>
                         
-                        <div style="margin-bottom: 15px;">
-                            <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; opacity: 0.8;">Description</div>
-                            <p id="${expId}-description" style="font-size: 13px; line-height: 1.6; margin: 0; color: #e8f4fd;">${experiences[0]?.description || ''}</p>
+                        <div class="exp-content-section" style="margin-bottom: 15px;">
+                            <div class="exp-label" style="font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; opacity: 0.8;">Description</div>
+                            <p id="${expId}-description" class="exp-description" style="font-size: 13px; line-height: 1.6; margin: 0; color: #e8f4fd;">${experiences[0]?.description || ''}</p>
                         </div>
                         
                         ${experiences[0]?.date ? `
-                        <div>
-                            <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; opacity: 0.8;">Date</div>
-                            <div id="${expId}-date" style="font-size: 13px; color: #e8f4fd;">${experiences[0]?.date}</div>
+                        <div class="exp-date-section">
+                            <div class="exp-label" style="font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; opacity: 0.8;">Date</div>
+                            <div id="${expId}-date" class="exp-date" style="font-size: 13px; color: #e8f4fd;">${experiences[0]?.date}</div>
                         </div>
                         ` : ''}
                     </div>
