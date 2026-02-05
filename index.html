@@ -202,6 +202,8 @@
     .game-over-overlay h1 { font-size: 40px; color: red; text-shadow: 0 0 10px red; margin: 0;}
     .neon-btn { border: 1px solid #0f0; color: #0f0; padding: 5px 15px; background: transparent; cursor: pointer; margin-top: 10px; box-shadow: 0 0 5px #0f0; }
     .neon-btn:hover { background: #0f0; color: #000; }
+    .mobile-arrow-btn { transition: all 0.2s; user-select: none; -webkit-user-select: none; }
+    .mobile-arrow-btn:active { transform: scale(0.9); background: rgba(0,255,0,0.4) !important; box-shadow: 0 0 15px #0f0; }
 
     /* Video Editor (Simulated) */
     .vid-container { display: flex; flex-direction: column; height: 100%; background: #222; color: white; }
@@ -346,6 +348,12 @@
     button:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
     button:active { transform: translateY(0); }
 
+    /* My Experience App */
+    .thumbnail-filmstrip .active { border-color: #316ac5 !important; box-shadow: 0 0 8px rgba(49, 106, 197, 0.5); }
+    .thumbnail-filmstrip .active:hover { border-color: #316ac5 !important; }
+    button:disabled { opacity: 0.5; cursor: not-allowed !important; }
+    button:disabled:hover { background: #ece9d8 !important; }
+
     /* === MOBILE RESPONSIVE === */
     @media (max-width: 768px) {
         /* Taskbar adjustments */
@@ -429,6 +437,8 @@
         
         /* Game canvas mobile */
         #game-canvas { width: 100% !important; max-width: 400px; }
+        .game-ui { width: 100% !important; max-width: 400px; font-size: 16px !important; }
+        .mobile-controls { width: 100%; max-width: 400px; }
         
         /* About Me mobile layout */
         .about-me-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
@@ -449,6 +459,22 @@
         .wmp-track-info { min-width: 150px !important; font-size: 10px; }
         .wmp-youtube-link { font-size: 9px; padding: 4px 8px; }
         .wmp-volume-slider { width: 60px !important; }
+        
+        /* My Experience mobile */
+        .window[data-app="my-experience"] > div > div:first-child {
+            flex-direction: column !important;
+        }
+        .window[data-app="my-experience"] > div > div:first-child > div:last-child {
+            width: 100% !important;
+            max-height: 40vh !important;
+        }
+        .window[data-app="my-experience"] .thumbnail-filmstrip {
+            height: 100px !important;
+        }
+        .window[data-app="my-experience"] .thumbnail-filmstrip > div {
+            min-width: 60px !important;
+            height: 60px !important;
+        }
         
         /* Notepad mobile */
         textarea.notepad-area { font-size: 14px; }
@@ -566,8 +592,53 @@
         'my-music': { title: 'My Music', icon: 'fa-solid fa-music', color: '#ff6b9d', func: createMusicPlayer },
         'calculator': { title: 'Calculator', icon: 'fa-solid fa-calculator', color: '#0078d4', func: createCalculator },
         'game': { title: 'Cyber Snake', icon: 'fa-solid fa-gamepad', color: '#adff2f', func: createGame },
-        'ai-project': { title: 'AI Project', icon: 'fa-solid fa-robot', color: '#ff6b9d', func: createAIProject }
+        'ai-project': { title: 'AI Project', icon: 'fa-solid fa-robot', color: '#ff6b9d', func: createAIProject },
+        'my-experience': { title: 'My Experience', icon: 'fa-solid fa-briefcase', color: '#0078d4', func: createMyExperience }
     };
+
+    // Experience Data
+    const experiences = [
+        {
+            id: 'btech-srm',
+            title: 'B.Tech in Information Technology',
+            image: 'public/afsalsrm.jpg',
+            description: 'Bachelor of Technology in Information Technology at SRM University Chennai',
+            institution: 'SRM University Chennai',
+            date: ''
+        },
+        {
+            id: 'ms-usc',
+            title: 'Master of Science in Entrepreneurship and Innovation',
+            image: 'public/afsalusc.JPG',
+            description: 'Master of Science in Entrepreneurship and Innovation at the University of Southern California Los Angeles',
+            institution: 'University of Southern California Los Angeles',
+            date: ''
+        },
+        {
+            id: 'unna-nanachida',
+            title: 'Unna Nanachida - Sony Music India',
+            image: 'public/unna.jpeg',
+            description: 'Released a song as composer and singer with Sony Music India called "Unna Nanachida" which reached over a million views on streaming platforms',
+            institution: 'Sony Music India',
+            date: ''
+        },
+        {
+            id: 'policy-insure',
+            title: 'Chief Technology Officer',
+            image: 'public/pi.jpg',
+            description: 'Serving as Chief Technology Officer at Policy Insure, India\'s leading insurance broking company. Leading the development of innovative technology systems and digital solutions that drive the company\'s transformation and enhance customer experience.',
+            institution: 'Policy Insure',
+            date: ''
+        },
+        {
+            id: 'genesis-ai',
+            title: 'Founder - Genesis AI',
+            image: 'public/genesis.jpg',
+            description: 'Founder of Genesis AI, an enterprise AI solutions company. We partner with government organizations including the Government of Tamil Nadu, businesses, and develop cutting-edge AI technologies including voice AI systems and experimental AI tools.',
+            institution: 'Genesis AI',
+            date: ''
+        }
+    ];
 
     // In-memory Virtual File System
     const VFS = {
@@ -1099,22 +1170,55 @@ Type 'python' to switch to Python mode
         container.querySelector('#brush-size').oninput = function() { lineWidth = this.value; };
         container.querySelector('#clear-btn').onclick = function() { ctx.fillRect(0, 0, canvas.width, canvas.height); };
 
-        function draw(e) {
-            if (!painting) return;
+        function getEventPos(e) {
             const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            ctx.lineWidth = lineWidth;
-            ctx.strokeStyle = color;
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
+            if(e.touches && e.touches.length > 0) {
+                return {
+                    x: e.touches[0].clientX - rect.left,
+                    y: e.touches[0].clientY - rect.top
+                };
+            }
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
         }
 
-        canvas.addEventListener('mousedown', (e) => { painting = true; draw(e); });
-        canvas.addEventListener('mouseup', () => { painting = false; ctx.beginPath(); });
+        function draw(e) {
+            if (!painting) return;
+            e.preventDefault();
+            const pos = getEventPos(e);
+            ctx.lineWidth = lineWidth;
+            ctx.strokeStyle = color;
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function startPaint(e) {
+            e.preventDefault();
+            painting = true;
+            const pos = getEventPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function stopPaint(e) {
+            e.preventDefault();
+            painting = false;
+            ctx.beginPath();
+        }
+
+        // Mouse events (desktop)
+        canvas.addEventListener('mousedown', startPaint);
+        canvas.addEventListener('mouseup', stopPaint);
         canvas.addEventListener('mousemove', draw);
+        
+        // Touch events (mobile)
+        canvas.addEventListener('touchstart', startPaint, { passive: false });
+        canvas.addEventListener('touchend', stopPaint, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
     }
 
     // 5. VS CODE (Monaco)
@@ -1148,11 +1252,30 @@ Type 'python' to switch to Python mode
 
     // 6. GAME (Cyber Snake)
     function createGame(container, fp, winId) {
+        const isMobile = window.innerWidth <= 768;
         container.innerHTML = `
             <div class="game-container">
                 <div class="game-ui"><span>Score: <span id="score">0</span></span><span>High: <span id="hiscore">0</span></span></div>
                 <canvas id="game-canvas" width="400" height="400"></canvas>
-                <div style="margin-top: 10px; font-size: 12px;">Use Arrow Keys</div>
+                <div style="margin-top: 10px; font-size: 12px;">${isMobile ? 'Use Arrow Buttons Below' : 'Use Arrow Keys'}</div>
+                ${isMobile ? `
+                <div class="mobile-controls" style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 15px; padding: 15px;">
+                    <button id="btn-up" class="mobile-arrow-btn" style="width: 60px; height: 60px; background: rgba(0,255,0,0.2); border: 2px solid #0f0; color: #0f0; font-size: 24px; cursor: pointer; border-radius: 8px; touch-action: manipulation;">
+                        <i class="fa-solid fa-arrow-up"></i>
+                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btn-left" class="mobile-arrow-btn" style="width: 60px; height: 60px; background: rgba(0,255,0,0.2); border: 2px solid #0f0; color: #0f0; font-size: 24px; cursor: pointer; border-radius: 8px; touch-action: manipulation;">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <button id="btn-down" class="mobile-arrow-btn" style="width: 60px; height: 60px; background: rgba(0,255,0,0.2); border: 2px solid #0f0; color: #0f0; font-size: 24px; cursor: pointer; border-radius: 8px; touch-action: manipulation;">
+                            <i class="fa-solid fa-arrow-down"></i>
+                        </button>
+                        <button id="btn-right" class="mobile-arrow-btn" style="width: 60px; height: 60px; background: rgba(0,255,0,0.2); border: 2px solid #0f0; color: #0f0; font-size: 24px; cursor: pointer; border-radius: 8px; touch-action: manipulation;">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                ` : ''}
                 <div class="game-over-overlay" id="go-screen">
                     <h1>GAME OVER</h1>
                     <button class="neon-btn" onclick="this.parentElement.dispatchEvent(new Event('restart'))">RESTART</button>
@@ -1242,17 +1365,40 @@ Type 'python' to switch to Python mode
             gameLoop = setInterval(drawGame, 100);
         }
 
-        // Input handling attached to document, need to check if this window is focused
+        // Input handling - keyboard for desktop, buttons for mobile
+        const handleDirection = (dir) => {
+            if(!running || document.getElementById(winId).style.zIndex != zIndexCounter) return;
+            switch (dir) {
+                case 'up': if (dy === 0) { dx = 0; dy = -1; } break;
+                case 'down': if (dy === 0) { dx = 0; dy = 1; } break;
+                case 'left': if (dx === 0) { dx = -1; dy = 0; } break;
+                case 'right': if (dx === 0) { dx = 1; dy = 0; } break;
+            }
+        };
+
         const keyHandler = (e) => {
             if(!running || document.getElementById(winId).style.zIndex != zIndexCounter) return;
             switch (e.key) {
-                case 'ArrowUp': if (dy === 0) { dx = 0; dy = -1; } break;
-                case 'ArrowDown': if (dy === 0) { dx = 0; dy = 1; } break;
-                case 'ArrowLeft': if (dx === 0) { dx = -1; dy = 0; } break;
-                case 'ArrowRight': if (dx === 0) { dx = 1; dy = 0; } break;
+                case 'ArrowUp': handleDirection('up'); break;
+                case 'ArrowDown': handleDirection('down'); break;
+                case 'ArrowLeft': handleDirection('left'); break;
+                case 'ArrowRight': handleDirection('right'); break;
             }
         };
         document.addEventListener('keydown', keyHandler);
+
+        // Mobile arrow buttons
+        if(isMobile) {
+            container.querySelector('#btn-up')?.addEventListener('touchstart', (e) => { e.preventDefault(); handleDirection('up'); });
+            container.querySelector('#btn-down')?.addEventListener('touchstart', (e) => { e.preventDefault(); handleDirection('down'); });
+            container.querySelector('#btn-left')?.addEventListener('touchstart', (e) => { e.preventDefault(); handleDirection('left'); });
+            container.querySelector('#btn-right')?.addEventListener('touchstart', (e) => { e.preventDefault(); handleDirection('right'); });
+            // Also support click for better compatibility
+            container.querySelector('#btn-up')?.addEventListener('click', (e) => { e.preventDefault(); handleDirection('up'); });
+            container.querySelector('#btn-down')?.addEventListener('click', (e) => { e.preventDefault(); handleDirection('down'); });
+            container.querySelector('#btn-left')?.addEventListener('click', (e) => { e.preventDefault(); handleDirection('left'); });
+            container.querySelector('#btn-right')?.addEventListener('click', (e) => { e.preventDefault(); handleDirection('right'); });
+        }
         
         // Cleanup when window closes
         const observer = new MutationObserver((mutations) => {
@@ -1270,12 +1416,35 @@ Type 'python' to switch to Python mode
         ctx.fillStyle = '#0f0'; ctx.font = "20px Courier New"; ctx.textAlign = "center";
         ctx.fillText("Press Arrow Key to Start", canvas.width/2, canvas.height/2);
         
-        document.addEventListener('keydown', function starter(e){
-             if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) && document.getElementById(winId).style.zIndex == zIndexCounter && !running) {
-                 document.removeEventListener('keydown', starter);
-                 startGame();
-             }
-        });
+        const startHandler = (e) => {
+            if(document.getElementById(winId).style.zIndex == zIndexCounter && !running) {
+                if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+                    document.removeEventListener('keydown', startHandler);
+                    startGame();
+                }
+            }
+        };
+        document.addEventListener('keydown', startHandler);
+        
+        // Mobile start handler
+        if(isMobile) {
+            const mobileStartBtn = container.querySelector('.mobile-arrow-btn');
+            if(mobileStartBtn) {
+                const mobileStart = () => {
+                    if(!running) {
+                        startGame();
+                        container.querySelectorAll('.mobile-arrow-btn').forEach(btn => {
+                            btn.removeEventListener('touchstart', mobileStart);
+                            btn.removeEventListener('click', mobileStart);
+                        });
+                    }
+                };
+                container.querySelectorAll('.mobile-arrow-btn').forEach(btn => {
+                    btn.addEventListener('touchstart', mobileStart);
+                    btn.addEventListener('click', mobileStart);
+                });
+            }
+        }
     }
 
     // 7. BROWSER (Mock)
@@ -1890,6 +2059,135 @@ Type 'python' to switch to Python mode
         }
     }
 
+    // 11. MY EXPERIENCE (Windows XP Style Image Viewer)
+    function createMyExperience(container) {
+        const expId = 'exp-' + Date.now();
+        let currentIndex = 0;
+
+        function renderExperience() {
+            const exp = experiences[currentIndex];
+            if (!exp) return;
+
+            const mainImage = container.querySelector(`#${expId}-main-image`);
+            const expTitle = container.querySelector(`#${expId}-title`);
+            const expInstitution = container.querySelector(`#${expId}-institution`);
+            const expDescription = container.querySelector(`#${expId}-description`);
+            const expDate = container.querySelector(`#${expId}-date`);
+            const thumbnails = container.querySelectorAll(`.${expId}-thumbnail`);
+            
+            if (mainImage) mainImage.src = exp.image;
+            if (expTitle) expTitle.textContent = exp.title;
+            if (expInstitution) expInstitution.textContent = exp.institution;
+            if (expDescription) expDescription.textContent = exp.description;
+            if (expDate) expDate.textContent = exp.date || '';
+            
+            // Update thumbnail selection
+            thumbnails.forEach((thumb, idx) => {
+                if (idx === currentIndex) {
+                    thumb.classList.add('active');
+                } else {
+                    thumb.classList.remove('active');
+                }
+            });
+
+            // Update navigation buttons
+            const prevBtn = container.querySelector(`#${expId}-prev`);
+            const nextBtn = container.querySelector(`#${expId}-next`);
+            if (prevBtn) prevBtn.disabled = currentIndex === 0;
+            if (nextBtn) nextBtn.disabled = currentIndex === experiences.length - 1;
+        }
+
+        container.innerHTML = `
+            <div style="display: flex; flex-direction: column; height: 100%; background: #ece9d8; font-family: 'Segoe UI', sans-serif;">
+                <!-- Top Section: Main Image + Description -->
+                <div style="display: flex; flex: 1; overflow: hidden; min-height: 0;">
+                    <!-- Main Image Area -->
+                    <div style="flex: 1; display: flex; align-items: center; justify-content: center; background: #fff; border-right: 1px solid #ccc; padding: 20px; overflow: auto;">
+                        <img id="${expId}-main-image" src="${experiences[0]?.image || ''}" alt="Experience" style="max-width: 100%; max-height: 100%; object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    </div>
+                    
+                    <!-- Description Panel (Windows XP Style) -->
+                    <div style="width: 280px; background: linear-gradient(to bottom, #316ac5 0%, #2458a8 100%); color: white; padding: 20px; overflow-y: auto; border-left: 1px solid #1a4a8a;">
+                        <div style="margin-bottom: 20px;">
+                            <h2 id="${expId}-title" style="font-size: 18px; font-weight: 600; margin: 0 0 10px 0; color: white;">${experiences[0]?.title || ''}</h2>
+                            <div id="${expId}-institution" style="font-size: 14px; opacity: 0.9; margin-bottom: 15px; color: #e8f4fd;">${experiences[0]?.institution || ''}</div>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; opacity: 0.8;">Description</div>
+                            <p id="${expId}-description" style="font-size: 13px; line-height: 1.6; margin: 0; color: #e8f4fd;">${experiences[0]?.description || ''}</p>
+                        </div>
+                        
+                        ${experiences[0]?.date ? `
+                        <div>
+                            <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; opacity: 0.8;">Date</div>
+                            <div id="${expId}-date" style="font-size: 13px; color: #e8f4fd;">${experiences[0]?.date}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                <!-- Bottom Filmstrip -->
+                <div style="height: 120px; background: #f0f0f0; border-top: 1px solid #ccc; display: flex; flex-direction: column;">
+                    <!-- Navigation Controls -->
+                    <div style="padding: 8px 15px; display: flex; align-items: center; gap: 10px; background: #ece9d8; border-bottom: 1px solid #ccc;">
+                        <button id="${expId}-prev" style="padding: 4px 12px; background: #ece9d8; border: 1px solid #999; cursor: pointer; font-size: 12px; color: #333;" onmouseover="this.style.background='#d4d0c8'" onmouseout="this.style.background='#ece9d8'">
+                            <i class="fa-solid fa-chevron-left"></i> Previous
+                        </button>
+                        <button id="${expId}-next" style="padding: 4px 12px; background: #ece9d8; border: 1px solid #999; cursor: pointer; font-size: 12px; color: #333;" onmouseover="this.style.background='#d4d0c8'" onmouseout="this.style.background='#ece9d8'">
+                            Next <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <div style="margin-left: auto; font-size: 11px; color: #666;">
+                            <span id="${expId}-counter">1</span> of ${experiences.length}
+                        </div>
+                    </div>
+                    
+                    <!-- Thumbnail Filmstrip -->
+                    <div class="thumbnail-filmstrip" style="flex: 1; overflow-x: auto; overflow-y: hidden; padding: 10px; display: flex; gap: 10px; align-items: center; -webkit-overflow-scrolling: touch;">
+                        ${experiences.map((exp, idx) => `
+                            <div class="${expId}-thumbnail ${idx === 0 ? 'active' : ''}" data-index="${idx}" style="min-width: 80px; height: 80px; border: 2px solid ${idx === 0 ? '#316ac5' : '#ccc'}; cursor: pointer; padding: 2px; background: white; transition: all 0.2s;" onmouseover="this.style.borderColor='#316ac5'" onmouseout="if(!this.classList.contains('active')) this.style.borderColor='#ccc'">
+                                <img src="${exp.image}" alt="${exp.title}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Event listeners
+        const prevBtn = container.querySelector(`#${expId}-prev`);
+        const nextBtn = container.querySelector(`#${expId}-next`);
+        const thumbnails = container.querySelectorAll(`.${expId}-thumbnail`);
+        const counter = container.querySelector(`#${expId}-counter`);
+
+        prevBtn?.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderExperience();
+                if (counter) counter.textContent = currentIndex + 1;
+            }
+        });
+
+        nextBtn?.addEventListener('click', () => {
+            if (currentIndex < experiences.length - 1) {
+                currentIndex++;
+                renderExperience();
+                if (counter) counter.textContent = currentIndex + 1;
+            }
+        });
+
+        thumbnails.forEach((thumb, idx) => {
+            thumb.addEventListener('click', () => {
+                currentIndex = idx;
+                renderExperience();
+                if (counter) counter.textContent = currentIndex + 1;
+            });
+        });
+
+        // Initialize
+        renderExperience();
+    }
+
 
     /* --- UI/UX & EVENTS --- */
 
@@ -1909,7 +2207,7 @@ Type 'python' to switch to Python mode
             }
         };
         
-        // Define desktop icon order: About Me, then AI Experiments folder, then apps, then files
+        // Define desktop icon order: About Me, then My Experience, then AI Experiments folder, then apps, then files
         // Step 1: Add About Me
         if(AppRegistry['about-me']) {
             const icon = document.createElement('div');
@@ -1921,7 +2219,18 @@ Type 'python' to switch to Python mode
             dc.appendChild(icon);
         }
         
-        // Step 2: Add AI Experiments folder (from VFS)
+        // Step 2: Add My Experience
+        if(AppRegistry['my-experience']) {
+            const icon = document.createElement('div');
+            icon.className = 'd-icon';
+            icon.setAttribute('data-app', 'my-experience');
+            icon.innerHTML = `<i class="${AppRegistry['my-experience'].icon}" style="color: ${AppRegistry['my-experience'].color}"></i><span>${AppRegistry['my-experience'].title}</span>`;
+            icon.addEventListener('click', () => handleIconClick(() => WindowManager.open('my-experience'), icon));
+            icon.addEventListener('dblclick', () => WindowManager.open('my-experience'));
+            dc.appendChild(icon);
+        }
+        
+        // Step 3: Add AI Experiments folder (from VFS)
         const dtFiles = VFS.root.children['Desktop'].children;
         if(dtFiles['AI Experiments']) {
             const icon = document.createElement('div');
@@ -1982,6 +2291,18 @@ Type 'python' to switch to Python mode
                 </div>
                 <span>AI Experiments</span>
             </div>`;
+        
+        // Add My Experience
+        if(AppRegistry['my-experience']) {
+            const app = AppRegistry['my-experience'];
+            sm.innerHTML += `
+                <div class="app-item" onclick="WindowManager.open('my-experience'); toggleStartMenu();">
+                    <div style="width:40px; height:40px; background:${app.color}; border-radius:8px; display:flex; justify-content:center; align-items:center;">
+                        <i class="${app.icon}" style="color:white; font-size:20px;"></i>
+                    </div>
+                    <span>${app.title}</span>
+                </div>`;
+        }
         
         // Add Calculator, Terminal, Paint, Snake Game, and Music Player
         const startMenuApps = ['calculator', 'terminal', 'paint', 'game', 'my-music'];
